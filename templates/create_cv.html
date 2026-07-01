@@ -1,0 +1,9 @@
+<h2>Create CV</h2>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %} {{ form.as_p }}
+
+  <button type="submit">Save CV</button>
+</form>
+
+<p><a href="/dashboard/">Back to Dashboard</a></p>

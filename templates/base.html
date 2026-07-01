@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}AI CV Builder{% endblock %}</title>
+  </head>
+  <body>
+    <header>
+      <h1>AI CV Builder</h1>
+
+      <nav>
+        <a href="/">Home</a> | <a href="#">Register</a> |
+        <a href="#">Login</a>
+      </nav>
+
+      <hr />
+    </header>
+
+    <main>{% block content %} {% endblock %}</main>
+
+    <hr />
+
+    <footer>
+      <p>&copy; 2026 AI CV Builder</p>
+    </footer>
+  </body>
+</html>

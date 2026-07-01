@@ -41,6 +41,24 @@ def create_cv(request):
 
     return render(request, "create_cv.html", {"form": form})
 
+# -------------------------
+# EDIT CV
+# -------------------------
+@login_required
+def edit_cv(request, id):
+    cv = CV.objects.get(id=id, user=request.user)
+
+    if request.method == "POST":
+        form = CVForm(request.POST, request.FILES, instance=cv)
+
+        if form.is_valid():
+            form.save()
+            return redirect("dashboard")
+
+    else:
+        form = CVForm(instance=cv)
+
+    return render(request, "create_cv.html", {"form": form})
 
 # -------------------------
 # PDF EXPORT CV
@@ -66,16 +84,39 @@ def download_cv_pdf(request, id):
     # Summary
     p.setFont("Helvetica-Bold", 12)
     p.drawString(100, 720, "Summary:")
+
+    summary_lines = cv.summary.split("\n")
     p.setFont("Helvetica", 11)
-    p.drawString(120, 705, cv.summary[:300])
+    y = 705
+
+    for line in summary_lines:
+        p.drawString(120, y, line)
+        y -= 15
 
     # Skills
     p.setFont("Helvetica-Bold", 12)
     p.drawString(100, 670, "Skills:")
+
+    skills_lines = cv.skills.split("\n")
     p.setFont("Helvetica", 11)
-    p.drawString(120, 655, cv.skills[:300])
+    y = 655
+
+    for skill in skills_lines:
+        if skill.strip():
+            clean_skill = skill.replace("•", "").strip()
+            p.drawString(120, y, f"• {clean_skill}")
+            y -= 15
 
     p.showPage()
     p.save()
 
     return response
+@login_required
+def delete_cv(request, id):
+    cv = CV.objects.get(id=id, user=request.user)
+
+    if request.method == "POST":
+        cv.delete()
+        return redirect("dashboard")
+
+    return render(request, "delete_cv.html", {"cv": cv})

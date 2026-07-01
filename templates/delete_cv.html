@@ -1,0 +1,12 @@
+<h2>Delete CV</h2>
+
+<p>Are you sure you want to delete:</p>
+
+<strong>{{ cv.full_name }}</strong>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit">Yes, Delete</button>
+</form>
+
+<a href="http://127.0.0.1:8000/dashboard/">Cancel</a>

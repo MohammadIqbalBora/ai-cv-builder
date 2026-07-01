@@ -14,8 +14,12 @@
   <li>
     <strong>{{ cv.full_name }}</strong><br />
     {{ cv.email }}<br />
-    Created: {{ cv.created_at }}
+    Created: {{ cv.created_at }}<br /><br />
+
+    <a href="{% url 'edit_cv' cv.id %}">✏️ Edit</a> |
+    <a href="{% url 'download_cv_pdf' cv.id %}">📄 Download PDF</a>
   </li>
+  <br />
   {% endfor %}
 </ul>
 {% else %}

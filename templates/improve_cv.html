@@ -1,0 +1,24 @@
+<h2>Improve CV with AI</h2>
+
+<p><strong>{{ cv.full_name }}</strong></p>
+
+<form method="post">
+  {% csrf_token %}
+  <textarea
+    name="job_description"
+    rows="10"
+    cols="80"
+    placeholder="Paste job description here..."
+  ></textarea>
+  <br /><br />
+  <button type="submit">Improve CV</button>
+</form>
+
+<hr />
+
+{% if improved %}
+<h3>AI Result</h3>
+<pre>{{ improved }}</pre>
+{% endif %}
+
+<a href="http://127.0.0.1:8000/dashboard/">Back to Dashboard</a>

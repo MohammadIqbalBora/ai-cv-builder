@@ -8,5 +8,9 @@ urlpatterns = [
     path("cv/edit/<int:id>/", views.edit_cv, name="edit_cv"),
     path("cv/download/<int:id>/", views.download_cv_pdf, name="download_cv_pdf"),
     path("cv/delete/<int:id>/", views.delete_cv, name="delete_cv"),
+    path("cv/improve/<int:id>/", views.improve_cv_ai, name="improve_cv_ai"),
+    path("cover-letter/<int:id>/", views.create_cover_letter, name="create_cover_letter"),
+    
+    
     
 ]

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class CV(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -13,15 +14,20 @@ class CV(models.Model):
     education = models.TextField(blank=True)
     skills = models.TextField(blank=True)
 
-    # ✅ THIS IS THE PART I MEANT
-    uploaded_file = models.FileField(
-        upload_to='cv_uploads/',
-        blank=True,
-        null=True
-    )
+    uploaded_file = models.FileField(upload_to="cv_uploads/", blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.full_name
+
+
+class CoverLetter(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cv = models.ForeignKey("CV", on_delete=models.CASCADE)
+
+    job_description = models.TextField()
+    content = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
     

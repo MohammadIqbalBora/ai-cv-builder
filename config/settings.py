@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+
 import os
 from dotenv import load_dotenv
 import dj_database_url
@@ -145,4 +146,6 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# OPENAI_API_KEY = "your-api-key-here"
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

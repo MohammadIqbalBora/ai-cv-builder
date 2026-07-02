@@ -1,0 +1,29 @@
+<h2>AI Cover Letter Generator</h2>
+
+<p><strong>{{ cv.full_name }}</strong></p>
+
+<form method="post">
+  {% csrf_token %}
+
+  <textarea
+    name="job_description"
+    rows="10"
+    cols="80"
+    placeholder="Paste job description here..."
+  ></textarea>
+
+  <br /><br />
+
+  <button type="submit">Generate Cover Letter</button>
+</form>
+
+<hr />
+
+{% if result %}
+<h3>Generated Cover Letter</h3>
+<pre>{{ result }}</pre>
+{% endif %}
+
+<br />
+
+<a href="/dashboard/">Back to Dashboard</a>

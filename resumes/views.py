@@ -1,10 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from reportlab.pdfgen import canvas
 
-from .models import CV
+from .models import CV, CoverLetter
 from .forms import CVForm
+
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+
+from .ai_service import improve_cv, generate_cover_letter
 
 
 # -------------------------
@@ -41,82 +45,132 @@ def create_cv(request):
 
     return render(request, "create_cv.html", {"form": form})
 
+
 # -------------------------
 # EDIT CV
 # -------------------------
 @login_required
 def edit_cv(request, id):
-    cv = CV.objects.get(id=id, user=request.user)
+    cv = get_object_or_404(CV, id=id, user=request.user)
 
     if request.method == "POST":
         form = CVForm(request.POST, request.FILES, instance=cv)
-
         if form.is_valid():
             form.save()
             return redirect("dashboard")
-
     else:
         form = CVForm(instance=cv)
 
     return render(request, "create_cv.html", {"form": form})
 
+
 # -------------------------
-# PDF EXPORT CV
+# DOWNLOAD CV PDF
 # -------------------------
 @login_required
 def download_cv_pdf(request, id):
-    cv = CV.objects.get(id=id, user=request.user)
+    cv = get_object_or_404(CV, id=id, user=request.user)
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{cv.full_name}_CV.pdf"'
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{cv.full_name}_CV.pdf"'
 
-    p = canvas.Canvas(response)
+    doc = SimpleDocTemplate(response)
 
-    # Header
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(100, 800, cv.full_name)
+    styles = getSampleStyleSheet()
+    normal = styles["Normal"]
+    title = styles["Title"]
+
+    content = []
+
+    # Name
+    content.append(Paragraph(cv.full_name, title))
+    content.append(Spacer(1, 12))
 
     # Contact
-    p.setFont("Helvetica", 12)
-    p.drawString(100, 770, f"Email: {cv.email}")
-    p.drawString(100, 755, f"Phone: {cv.phone}")
+    content.append(Paragraph(f"Email: {cv.email}", normal))
+    content.append(Paragraph(f"Phone: {cv.phone}", normal))
+    content.append(Spacer(1, 12))
 
     # Summary
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(100, 720, "Summary:")
-
-    summary_lines = cv.summary.split("\n")
-    p.setFont("Helvetica", 11)
-    y = 705
-
-    for line in summary_lines:
-        p.drawString(120, y, line)
-        y -= 15
+    content.append(Paragraph("<b>Summary</b>", normal))
+    content.append(Paragraph(cv.summary.replace("\n", "<br/>"), normal))
+    content.append(Spacer(1, 12))
 
     # Skills
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(100, 670, "Skills:")
+    content.append(Paragraph("<b>Skills</b>", normal))
 
-    skills_lines = cv.skills.split("\n")
-    p.setFont("Helvetica", 11)
-    y = 655
-
-    for skill in skills_lines:
+    skills = cv.skills.split("\n")
+    for skill in skills:
         if skill.strip():
-            clean_skill = skill.replace("•", "").strip()
-            p.drawString(120, y, f"• {clean_skill}")
-            y -= 15
+            content.append(Paragraph(f"• {skill}", normal))
 
-    p.showPage()
-    p.save()
+    doc.build(content)
 
     return response
+
+
+# -------------------------
+# DELETE CV
+# -------------------------
 @login_required
 def delete_cv(request, id):
-    cv = CV.objects.get(id=id, user=request.user)
+    cv = get_object_or_404(CV, id=id, user=request.user)
 
     if request.method == "POST":
         cv.delete()
         return redirect("dashboard")
 
     return render(request, "delete_cv.html", {"cv": cv})
+
+
+# -------------------------
+# AI CV IMPROVEMENT
+# -------------------------
+@login_required
+def improve_cv_ai(request, id):
+    cv = get_object_or_404(CV, id=id, user=request.user)
+    result = None
+
+    if request.method == "POST":
+        job_description = request.POST.get("job_description")
+
+        cv_text = f"""
+Name: {cv.full_name}
+Email: {cv.email}
+Phone: {cv.phone}
+Summary: {cv.summary}
+Skills: {cv.skills}
+"""
+
+        result = improve_cv(cv_text, job_description)
+
+    return render(request, "improve_cv.html", {"cv": cv, "result": result})
+
+
+# -------------------------
+# COVER LETTER GENERATION
+# -------------------------
+@login_required
+def create_cover_letter(request, id):
+    cv = get_object_or_404(CV, id=id, user=request.user)
+    result = None
+
+    if request.method == "POST":
+        job_description = request.POST.get("job_description")
+
+        cv_text = f"""
+Name: {cv.full_name}
+Email: {cv.email}
+Phone: {cv.phone}
+Summary: {cv.summary}
+Skills: {cv.skills}
+"""
+
+        result = generate_cover_letter(cv_text, job_description)
+
+        CoverLetter.objects.create(
+            user=request.user, cv=cv, job_description=job_description, content=result
+        )
+
+    return render(request, "cover_letter.html", {"cv": cv, "result": result})
+

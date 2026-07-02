@@ -14,11 +14,25 @@
   <li>
     <strong>{{ cv.full_name }}</strong><br />
     {{ cv.email }}<br />
-    Created: {{ cv.created_at }}<br /><br />
+    Created: {{ cv.created_at }}
 
-    <a href="{% url 'edit_cv' cv.id %}">✏️ Edit</a> |
-    <a href="{% url 'download_cv_pdf' cv.id %}">📄 Download PDF</a>
+    <br /><br />
+
+    <a href="/cv/edit/{{ cv.id }}/">✏ Edit</a> |
+    <a href="/cv/download/{{ cv.id }}/">⬇ Download PDF</a> |
+    <a href="/cv/improve/{{ cv.id }}/">🤖 Improve with AI</a> |
+    <a href="/cv/delete/{{ cv.id }}/">🗑 Delete</a>
+    <hr />
+
+    <strong>{{ cv.full_name }}</strong><br />
+
+    <a href="/cv/edit/{{ cv.id }}/">✏ Edit</a> |
+    <a href="/cv/download/{{ cv.id }}/">⬇ PDF</a> |
+    <a href="/cv/improve/{{ cv.id }}/">🤖 AI Improve</a> |
+    <a href="/cover-letter/{{ cv.id }}/">✉ Cover Letter</a> |
+    <a href="/cv/delete/{{ cv.id }}/">🗑 Delete</a>
   </li>
+  <hr />
   <br />
   {% endfor %}
 </ul>

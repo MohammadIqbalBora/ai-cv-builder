@@ -1,4 +1,6 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} 
+
+{% block content %}
 
 <h2>CV Preview</h2>
 
@@ -47,7 +49,7 @@
 {% elif cv.template == "executive" %}
 
 <div class="card p-4 border-dark bg-light">
-  <h1 style="text-transform: uppercase">{{ cv.full_name }}</h1>
+  <h1 class="template-executive-name">{{ cv.full_name }}</h1>
 
   <p><strong>{{ cv.job_title }}</strong></p>
 

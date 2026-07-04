@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid pricing-page">
+
+    <div class="text-center pricing-header">
+
+        <span class="badge bg-primary mb-3">
+            Pricing
+        </span>
+
+        <h1 class="display-3 fw-bold">
+            Choose Your Plan
+        </h1>
+
+        <p class="fs-4 text-muted">
+            Unlock AI-powered features and professional PDF exports.
+        </p>
+
+    </div>
+
+    <div class="row g-5 justify-content-center">
+
+        <!-- FREE -->
+
+        <div class="col-lg-5">
+
+            <div class="card h-100 pricing-card">
+
+                <div class="card-body">
+
+                    <h2 class="fw-bold">
+                        Free
+                    </h2>
+
+                    <h1 class="display-3">
+                        £0
+                    </h1>
+
+                    <p class="text-muted">
+                        Perfect for getting started.
+                    </p>
+
+                    <hr>
+
+                    <ul class="list-group list-group-flush">
+
+                        <li class="list-group-item">✅ Create CVs</li>
+
+                        <li class="list-group-item">✅ Edit CVs</li>
+
+                        <li class="list-group-item">✅ Upload Existing CV</li>
+
+                        <li class="list-group-item">❌ AI CV Improvement</li>
+
+                        <li class="list-group-item">❌ AI Cover Letters</li>
+
+                        <li class="list-group-item">❌ PDF Export</li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- PREMIUM -->
+
+        <div class="col-lg-5">
+
+            <div class="card border-primary shadow-lg pricing-card">
+
+                <div class="card-body">
+
+                    <span class="badge bg-warning text-dark mb-3">
+                        Recommended
+                    </span>
+
+                    <h2 class="fw-bold">
+                        Premium
+                    </h2>
+
+                    <h1 class="display-3">
+                        £4.99
+                        <small class="fs-4">/month</small>
+                    </h1>
+
+                    <p class="text-muted">
+                        Everything you need to build professional CVs.
+                    </p>
+
+                    <hr>
+
+                    <ul class="list-group list-group-flush">
+
+                        <li class="list-group-item">✅ Unlimited CVs</li>
+
+                        <li class="list-group-item">✅ AI CV Improvement</li>
+
+                        <li class="list-group-item">✅ AI Cover Letters</li>
+
+                        <li class="list-group-item">✅ PDF Export</li>
+
+                        <li class="list-group-item">✅ Premium Templates</li>
+
+                        <li class="list-group-item">✅ Future Updates</li>
+
+                    </ul>
+
+                    <div class="mt-4">
+
+                        {% if is_premium %}
+
+                            <button class="btn btn-success btn-lg w-100" disabled>
+
+                                ✓ You are Premium
+
+                            </button>
+
+                        {% else %}
+
+                            <a href="{% url 'subscribe' %}"
+                               class="btn btn-primary btn-lg w-100">
+
+                                Upgrade Now
+
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

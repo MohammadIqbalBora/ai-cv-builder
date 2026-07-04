@@ -39,11 +39,22 @@ class CV(models.Model):
 
 
 class Subscription(models.Model):
+    PLAN_CHOICES = [
+        ("Free", "Free"),
+        ("Premium", "Premium"),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=False)
-    plan_name = models.CharField(max_length=100, default="Free")
+
+    plan_name = models.CharField(
+        max_length=20,
+        choices=PLAN_CHOICES,
+        default="Free",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

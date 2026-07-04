@@ -1,12 +1,107 @@
-<h2>Delete CV</h2>
+{% extends "base.html" %}
 
-<p>Are you sure you want to delete:</p>
+{% block content %}
 
-<strong>{{ cv.full_name }}</strong>
+<div class="delete-page">
 
-<form method="post">
-  {% csrf_token %}
-  <button type="submit">Yes, Delete</button>
-</form>
+    <div class="delete-card">
 
-<a href="http://127.0.0.1:8000/dashboard/">Cancel</a>
+        <div class="warning-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+
+        <span class="badge bg-danger mb-3">
+            Delete Confirmation
+        </span>
+
+        <h1>Delete this CV?</h1>
+
+        <p class="lead text-muted">
+            This action cannot be undone.
+        </p>
+
+        <hr>
+
+        <div class="cv-preview">
+
+            <h3>{{ cv.full_name }}</h3>
+
+            {% if cv.job_title %}
+                <h5 class="text-primary">{{ cv.job_title }}</h5>
+            {% endif %}
+
+            <div class="mt-4">
+
+                <h6>Professional Summary</h6>
+
+                <p>
+                    {{ cv.professional_summary|default:"No professional summary available."|truncatewords:35 }}
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="alert alert-warning mt-4">
+
+            <strong>Warning:</strong>
+
+            Deleting this CV will permanently remove:
+
+            <ul class="mt-3 mb-0">
+
+                <li>Personal information</li>
+
+                <li>Experience</li>
+
+                <li>Education</li>
+
+                <li>Skills</li>
+
+                <li>Uploaded CV file</li>
+
+            </ul>
+
+        </div>
+
+        <form method="post" class="mt-4">
+
+            {% csrf_token %}
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <a href="{% url 'dashboard' %}"
+                       class="btn btn-outline-secondary w-100">
+
+                        <i class="bi bi-arrow-left"></i>
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <button type="submit"
+                            class="btn btn-danger w-100">
+
+                        <i class="bi bi-trash-fill"></i>
+
+                        Yes, Delete CV
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

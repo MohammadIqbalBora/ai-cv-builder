@@ -168,13 +168,15 @@ def download_cv_pdf(request, id):
 
     cv = get_object_or_404(CV, id=id, user=request.user)
 
-    if cv.template == "modern":
+    template = request.GET.get("template", cv.template)
+
+    if template == "modern":
         return render_modern_pdf(cv)
 
-    if cv.template == "classic":
+    if template == "classic":
         return render_classic_pdf(cv)
 
-    if cv.template == "executive":
+    if template == "executive":
         return render_executive_pdf(cv)
 
     return render_modern_pdf(cv)
@@ -184,6 +186,24 @@ def download_cv_pdf(request, id):
 def cv_preview(request, id):
     cv = get_object_or_404(CV, id=id, user=request.user)
     return render(request, "cv_preview.html", {"cv": cv})
+
+
+@login_required
+def pricing(request):
+    subscription = Subscription.objects.filter(user=request.user).first()
+
+    is_premium = False
+
+    if subscription and subscription.is_active:
+        is_premium = True
+
+    return render(
+        request,
+        "pricing.html",
+        {
+            "is_premium": is_premium,
+        },
+    )
 
 
 @login_required
@@ -298,3 +318,13 @@ def import_uploaded_cv(request, id):
 def cv_detail(request, id):
     cv = get_object_or_404(CV, id=id, user=request.user)
     return render(request, "cv_detail.html", {"cv": cv})
+
+
+@login_required
+def select_pdf_template(request, id):
+    if not user_has_active_subscription(request.user):
+        return redirect("subscribe")
+
+    cv = get_object_or_404(CV, id=id, user=request.user)
+
+    return render(request, "pdf_templates.html", {"cv": cv})

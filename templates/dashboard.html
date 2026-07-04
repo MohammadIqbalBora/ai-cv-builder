@@ -1,368 +1,144 @@
-{% extends 'base.html' %} {% block content %} {% if cvs %}
+{% extends 'base.html' %}
 
-<style>
-  .page-shell {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0;
-  }
+{% block content %}
 
-  .app-dashboard {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    min-height: calc(100vh - 90px);
-  }
+{% if cvs %}
 
-  .app-sidebar {
-    background: #ffffff;
-    border-right: 1px solid #e5e7eb;
-    padding: 28px;
-    min-height: calc(100vh - 90px);
-  }
+<div class="dashboard-page">
 
-  .app-sidebar h3 {
-    font-size: 28px;
-    font-weight: 800;
-    margin-bottom: 22px;
-  }
-
-  .cv-item {
-    display: flex;
-    gap: 14px;
-    align-items: center;
-    padding: 16px;
-    border-radius: 18px;
-    text-decoration: none;
-    color: #111827;
-    margin-bottom: 14px;
-    border: 2px solid #e5e7eb;
-    transition: 0.2s ease;
-  }
-
-  .cv-item:hover,
-  .cv-item.active {
-    border-color: #2563eb;
-    background: #eff6ff;
-  }
-
-  .cv-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 14px;
-    background: #dbeafe;
-    color: #2563eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-  }
-
-  .cv-item h6 {
-    font-weight: 800;
-    margin: 0;
-  }
-
-  .cv-item p {
-    margin: 0;
-    color: #64748b;
-    font-size: 14px;
-  }
-
-  .app-main {
-    padding: 40px 55px;
-    background: #eef3f8;
-  }
-
-  .top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 35px;
-  }
-
-  .top-bar h1 {
-    font-size: 46px;
-    font-weight: 850;
-  }
-
-  .top-bar p {
-    font-size: 21px;
-    color: #64748b;
-  }
-
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-    margin-bottom: 35px;
-  }
-
-  .stat-card {
-    background: white;
-    border-radius: 22px;
-    padding: 26px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-  }
-
-  .stat-card h2 {
-    font-size: 38px;
-    font-weight: 850;
-    margin: 0;
-  }
-
-  .stat-card p {
-    margin: 0;
-    color: #64748b;
-    font-size: 17px;
-  }
-
-  .cv-stage {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .cv-document {
-    background: white;
-    border-radius: 28px;
-    padding: 60px;
-    min-height: 75vh;
-    width: 100%;
-    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.13);
-  }
-
-  .cv-document h1 {
-    font-size: 54px;
-    font-weight: 850;
-    margin-bottom: 6px;
-  }
-
-  .cv-document h4 {
-    font-size: 30px;
-    color: #2563eb;
-    margin-bottom: 18px;
-  }
-
-  .cv-document h3 {
-    font-size: 28px;
-    font-weight: 800;
-    margin-top: 30px;
-  }
-
-  .cv-document p {
-    font-size: 19px;
-    line-height: 1.75;
-    color: #475569;
-  }
-
-  .cv-content-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 50px;
-  }
-
-  .cv-side-panel {
-    background: #f8fafc;
-    border-radius: 22px;
-    padding: 30px;
-  }
-
-  .toolbar {
-    margin-top: 28px;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-  }
-
-  .toolbar .btn {
-    padding: 16px;
-  }
-
-  .premium-box {
-    margin-top: 28px;
-    padding: 22px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
-  }
-
-  @media (max-width: 1100px) {
-    .app-dashboard {
-      grid-template-columns: 1fr;
-    }
-
-    .stats-row,
-    .cv-content-grid,
-    .toolbar {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-
-<div class="app-dashboard">
-  <aside class="app-sidebar">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+  <aside class="dashboard-sidebar">
+    <div class="sidebar-title">
       <h3>My CVs</h3>
       <a href="{% url 'create_cv' %}" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-lg"></i>
       </a>
     </div>
 
-    {% for cv in cvs %}
-    <a
-      href="{% url 'dashboard' %}?cv={{ cv.id }}"
-      class="cv-item {% if selected_cv.id == cv.id %}active{% endif %}"
-    >
-      <div class="cv-icon">
-        <i class="bi bi-file-earmark-text"></i>
-      </div>
-      <div>
-        <h6>{{ cv.full_name|truncatechars:22 }}</h6>
-        <p>{{ cv.job_title|default:"No title added"|truncatechars:28 }}</p>
-      </div>
-    </a>
-    {% endfor %} {% if not is_premium %}
-    <div class="premium-box">
-      <h5 class="fw-bold">Upgrade to Premium</h5>
-      <p class="text-muted">Unlock AI, cover letters and PDF export.</p>
-      <a href="{% url 'subscribe' %}" class="btn btn-outline-primary w-100">
+    <div class="sidebar-list">
+      {% for cv in cvs %}
+      <a href="{% url 'dashboard' %}?cv={{ cv.id }}" class="sidebar-cv {% if selected_cv.id == cv.id %}active{% endif %}">
+        <div class="sidebar-icon">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div>
+          <strong>{{ cv.full_name|truncatechars:22 }}</strong>
+          <span>{{ cv.job_title|default:"No title added"|truncatechars:24 }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    {% if not is_premium %}
+    <div class="sidebar-premium">
+      <h5>Upgrade to Premium</h5>
+      <p>Unlock AI, cover letters and PDF export.</p>
+      <a href="{% url 'pricing' %}" class="btn btn-outline-primary w-100">
         Upgrade Now
       </a>
     </div>
     {% endif %}
   </aside>
 
-  <main class="app-main">
-    <div class="top-bar">
+  <main class="dashboard-main">
+
+    <div class="dashboard-header">
       <div>
-        <h1>
-          Welcome back, {{ request.user.first_name|default:request.user.username
-          }} 👋
-        </h1>
+        <h1>Welcome back, {{ user.first_name|default:user.username }} 👋</h1>
         <p>Create, manage and improve your professional CVs with AI.</p>
 
         {% if is_premium %}
-        <span class="badge bg-success">Current Plan: {{ plan_name }}</span>
+          <span class="badge bg-success">Current Plan: {{ plan_name }}</span>
         {% else %}
-        <span class="badge bg-secondary">Current Plan: Free</span>
+          <span class="badge bg-secondary">Current Plan: Free</span>
         {% endif %}
       </div>
 
-      <a href="{% url 'create_cv' %}" class="btn btn-primary btn-lg">
+      <a href="{% url 'create_cv' %}" class="btn btn-primary">
         <i class="bi bi-plus-lg"></i> Create New CV
       </a>
     </div>
 
-    <div class="stats-row">
-      <div class="stat-card">
+    <div class="dashboard-stats">
+      <div class="mini-stat">
         <h2>{{ total_cvs }}</h2>
         <p>Total CVs</p>
       </div>
 
-      <div class="stat-card">
+      <div class="mini-stat">
         <h2>{{ ai_improvements_used }}</h2>
         <p>AI Improvements</p>
       </div>
 
-      <div class="stat-card">
+      <div class="mini-stat">
         <h2>{{ cover_letters_generated }}</h2>
         <p>Cover Letters</p>
       </div>
     </div>
 
-    <section class="cv-stage">
-      <div class="cv-document">
-        <h1>{{ selected_cv.full_name }}</h1>
-        <h4>{{ selected_cv.job_title|default:"No job title added" }}</h4>
-        <span class="badge bg-dark"
-          >{{ selected_cv.get_template_display }}</span
-        >
+    <section class="dashboard-preview-card">
+      <div class="preview-top">
+        <div>
+          <h2>{{ selected_cv.full_name }}</h2>
+          <h4>{{ selected_cv.job_title|default:"No job title added" }}</h4>
+        </div>
+        <span class="badge bg-dark">{{ selected_cv.get_template_display }}</span>
+      </div>
 
-        <hr />
+      <hr />
 
-        <div class="cv-content-grid">
-          <div>
-            <h3>Professional Summary</h3>
-            <p>
-              {{ selected_cv.professional_summary|default:"No professional
-              summary added yet." }}
-            </p>
+      <div class="preview-content">
+        <div class="preview-left">
+          <h3>Professional Summary</h3>
+          <p>{{ selected_cv.professional_summary|default:"No professional summary added yet." }}</p>
 
-            <h3>Experience</h3>
-            <p style="white-space: pre-wrap">
-              {{ selected_cv.experience|default:"No experience added yet." }}
-            </p>
-          </div>
-
-          <div class="cv-side-panel">
-            <h3>Skills</h3>
-            <p style="white-space: pre-wrap">
-              {{ selected_cv.skills|default:"No skills added yet." }}
-            </p>
-
-            <h3>Education</h3>
-            <p style="white-space: pre-wrap">
-              {{ selected_cv.education|default:"No education added yet." }}
-            </p>
-          </div>
+          <h3>Experience</h3>
+          <p class="preserve-lines">{{ selected_cv.experience|default:"No experience added yet." }}</p>
         </div>
 
-        {% if selected_cv.uploaded_file %}
-        <div class="mt-4">
-          <a
-            href="{{ selected_cv.uploaded_file.url }}"
-            target="_blank"
-            class="btn btn-outline-dark"
-          >
-            <i class="bi bi-paperclip"></i> View Uploaded CV
-          </a>
+        <div class="preview-right">
+          <h3>Skills</h3>
+          <p class="preserve-lines">{{ selected_cv.skills|default:"No skills added yet." }}</p>
 
-          <a
-            href="{% url 'import_uploaded_cv' selected_cv.id %}"
-            class="btn btn-outline-primary"
-          >
-            <i class="bi bi-download"></i> Import CV Text
-          </a>
-        </div>
-        {% endif %}
-
-        <div class="toolbar">
-          <a
-            href="{% url 'edit_cv' selected_cv.id %}"
-            class="btn btn-outline-primary"
-          >
-            <i class="bi bi-pencil-fill"></i> Edit
-          </a>
-
-          <a
-            href="{% url 'improve_cv_ai' selected_cv.id %}"
-            class="btn btn-warning"
-          >
-            <i class="bi bi-robot"></i> AI Improve
-          </a>
-
-          <a
-            href="{% url 'create_cover_letter' selected_cv.id %}"
-            class="btn btn-info"
-          >
-            <i class="bi bi-envelope-fill"></i> Cover Letter
-          </a>
-
-          <a
-            href="{% url 'download_cv_pdf' selected_cv.id %}"
-            class="btn btn-success"
-          >
-            <i class="bi bi-file-earmark-pdf-fill"></i> PDF
-          </a>
-
-          <a
-            href="{% url 'delete_cv' selected_cv.id %}"
-            class="btn btn-outline-danger"
-          >
-            <i class="bi bi-trash-fill"></i> Delete
-          </a>
+          <h3>Education</h3>
+          <p class="preserve-lines">{{ selected_cv.education|default:"No education added yet." }}</p>
         </div>
       </div>
+
+      {% if selected_cv.uploaded_file %}
+      <div class="preview-upload-actions">
+        <a href="{{ selected_cv.uploaded_file.url }}" target="_blank" class="btn btn-outline-dark btn-sm">
+          <i class="bi bi-paperclip"></i> View Uploaded CV
+        </a>
+
+        <a href="{% url 'import_uploaded_cv' selected_cv.id %}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download"></i> Import CV Text
+        </a>
+      </div>
+      {% endif %}
+
+      <div class="dashboard-toolbar">
+        <a href="{% url 'edit_cv' selected_cv.id %}" class="btn btn-outline-primary">
+          <i class="bi bi-pencil-fill"></i> Edit
+        </a>
+
+        <a href="{% url 'improve_cv_ai' selected_cv.id %}" class="btn btn-warning">
+          <i class="bi bi-robot"></i> AI Improve
+        </a>
+
+        <a href="{% url 'create_cover_letter' selected_cv.id %}" class="btn btn-info">
+          <i class="bi bi-envelope-fill"></i> Cover Letter
+        </a>
+
+        <a href="{% url 'select_pdf_template' selected_cv.id %}" class="btn btn-success">
+          <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+        </a>
+
+        <a href="{% url 'delete_cv' selected_cv.id %}" class="btn btn-outline-danger">
+          <i class="bi bi-trash-fill"></i> Delete
+        </a>
+      </div>
     </section>
+
   </main>
 </div>
 
@@ -377,4 +153,6 @@
   </a>
 </div>
 
-{% endif %} {% endblock %}
+{% endif %}
+
+{% endblock %}

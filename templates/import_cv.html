@@ -1,4 +1,6 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} 
+
+{% block content %}
 
 <div class="import-page">
   <div class="import-header mb-5">
@@ -24,7 +26,7 @@
             Extracted CV Text
           </h3>
 
-          <p class="text-muted">
+          <p class="text-muted small mb-3">
             Source CV: <strong>{{ cv.full_name }}</strong>
           </p>
 
@@ -49,7 +51,7 @@
             What happens next?
           </h3>
 
-          <p class="text-muted">
+          <p class="text-muted small mb-3">
             The system will use the extracted text to update your CV fields,
             including name, email, phone, skills, experience and education.
           </p>
@@ -89,50 +91,5 @@
     </div>
   </div>
 </div>
-
-<style>
-  .import-page {
-    max-width: 1500px;
-    margin: 0 auto;
-  }
-
-  .import-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .import-header h1 {
-    font-size: 52px;
-    font-weight: 900;
-  }
-
-  .import-header p {
-    font-size: 21px;
-    color: #64748b;
-  }
-
-  .extracted-box {
-    background: #0f172a;
-    color: #e5e7eb;
-    border-radius: 18px;
-    padding: 28px;
-    max-height: 650px;
-    overflow-y: auto;
-  }
-
-  .extracted-box pre {
-    white-space: pre-wrap;
-    font-size: 16px;
-    line-height: 1.7;
-    margin: 0;
-    color: #e5e7eb;
-  }
-
-  .sticky-import {
-    position: sticky;
-    top: 30px;
-  }
-</style>
 
 {% endblock %}

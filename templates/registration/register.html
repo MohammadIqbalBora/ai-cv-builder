@@ -1,24 +1,105 @@
 {% extends "base.html" %}
 
-{% block title %}
-Register
-{% endblock %}
-
 {% block content %}
 
-<h2>Create an Account</h2>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-left">
+      <span class="badge bg-light text-dark mb-3">Create Your Account</span>
 
-<form method="post">
-    {% csrf_token %}
+      <h1>Start building better CVs today.</h1>
 
-    {{ form.as_p }}
+      <p>
+        Save your CVs, use AI tools, import existing documents and export professional PDFs.
+      </p>
 
-    <button type="submit">Register</button>
-</form>
+      <ul class="list-unstyled mt-4">
+        <li class="mb-3">✅ Create multiple CVs</li>
+        <li class="mb-3">✅ Upload and import existing CVs</li>
+        <li class="mb-3">✅ Generate cover letters</li>
+        <li>✅ Upgrade to Premium when ready</li>
+      </ul>
+    </div>
 
-<p>
-    Already have an account?
-    <a href="{% url 'login' %}">Login here</a>
-</p>
+    <div class="auth-right">
+      <h2>Create account</h2>
+      <p class="text-muted mb-4">Register to start using AI CV Builder.</p>
+
+      <form method="post">
+        {% csrf_token %}
+
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            {{ form.errors }}
+          </div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-person-plus-fill"></i> Register
+        </button>
+      </form>
+
+      <p class="mt-4 text-center">
+        Already have an account?
+        <a href="{% url 'login' %}">Login here</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .auth-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 1150px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    background: #ffffff;
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+  }
+
+  .auth-left {
+    background: linear-gradient(135deg, #071f3d 0%, #123c69 100%);
+    color: white;
+    padding: 60px;
+  }
+
+  .auth-left h1 {
+    color: white;
+    font-size: 48px;
+    font-weight: 900;
+  }
+
+  .auth-left p,
+  .auth-left li {
+    color: #dbeafe;
+    font-size: 20px;
+  }
+
+  .auth-right {
+    padding: 60px;
+  }
+
+  .auth-right h2 {
+    font-size: 42px;
+    font-weight: 900;
+  }
+
+  @media (max-width: 900px) {
+    .auth-card {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
 
 {% endblock %}

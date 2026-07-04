@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>CV Preview</h2>
+            <p class="text-muted">
+                Template: <strong>{{ cv.get_template_display }}</strong>
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'edit_cv' cv.id %}" class="btn btn-outline-primary">
+                ✏ Edit
+            </a>
+
+            <a href="{% url 'download_cv_pdf' cv.id %}" class="btn btn-success">
+                📄 Download PDF
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- CV CARD -->
+    <div class="card shadow-sm p-5">
+
+        <h1>{{ cv.full_name }}</h1>
+
+        <h4 class="text-primary">
+            {{ cv.job_title }}
+        </h4>
+
+        <hr>
+
+        <h5>Professional Summary</h5>
+        <p>{{ cv.professional_summary }}</p>
+
+        <hr>
+
+        <h5>Skills</h5>
+        <p>{{ cv.skills }}</p>
+
+        <hr>
+
+        <h5>Experience</h5>
+        <p>{{ cv.experience }}</p>
+
+        <hr>
+
+        <h5>Education</h5>
+        <p>{{ cv.education }}</p>
+
+    </div>
+
+</div>
+
+{% endblock %}

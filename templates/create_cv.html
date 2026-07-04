@@ -1,9 +1,191 @@
-<h2>Create CV</h2>
+{% extends 'base.html' %}
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %} {{ form.as_p }}
+{% block content %}
 
-  <button type="submit">Save CV</button>
-</form>
+<div class="editor-page">
+  <div class="editor-header mb-5">
+    <div>
+      <span class="badge bg-primary mb-3">CV Builder</span>
+      <h1>Create / Edit CV</h1>
+      <p>Complete each section below to build a professional CV.</p>
+    </div>
 
-<p><a href="/dashboard/">Back to Dashboard</a></p>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        {{ form.errors }}
+      </div>
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3><i class="bi bi-person-fill text-primary"></i> Personal Details</h3>
+            <p class="text-muted">Add your contact details and target job title.</p>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label>Full Name</label>
+                {{ form.full_name }}
+              </div>
+
+              <div class="col-md-6">
+                <label>Job Title</label>
+                {{ form.job_title }}
+              </div>
+
+              <div class="col-md-6">
+                <label>Email</label>
+                {{ form.email }}
+              </div>
+
+              <div class="col-md-6">
+                <label>Phone</label>
+                {{ form.phone }}
+              </div>
+
+              <div class="col-12">
+                <label>Address</label>
+                {{ form.address }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3><i class="bi bi-card-text text-primary"></i> Professional Summary</h3>
+            <p class="text-muted">Write a short profile that introduces your experience and career goals.</p>
+
+            <label>Professional Summary</label>
+            {{ form.professional_summary }}
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3><i class="bi bi-briefcase-fill text-primary"></i> Experience</h3>
+            <p class="text-muted">Add your work history, responsibilities and achievements.</p>
+
+            <label>Experience</label>
+            {{ form.experience }}
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3><i class="bi bi-mortarboard-fill text-primary"></i> Education</h3>
+            <p class="text-muted">Add qualifications, courses and certifications.</p>
+
+            <label>Education</label>
+            {{ form.education }}
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-lg-4">
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3><i class="bi bi-stars text-primary"></i> Skills</h3>
+            <p class="text-muted">List your most relevant technical and professional skills.</p>
+
+            <label>Skills</label>
+            {{ form.skills }}
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3><i class="bi bi-palette-fill text-primary"></i> Template</h3>
+            <p class="text-muted">Choose how your CV should look when exported.</p>
+
+            <label>CV Template</label>
+            {{ form.template }}
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3><i class="bi bi-upload text-primary"></i> Upload Existing CV</h3>
+            <p class="text-muted">Upload a PDF or DOCX CV to store or import later.</p>
+
+            <label>Uploaded CV</label>
+            {{ form.uploaded_file }}
+          </div>
+        </div>
+
+        <div class="card sticky-save">
+          <div class="card-body">
+            <h3>Ready?</h3>
+            <p class="text-muted">Save your CV and return to your dashboard.</p>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3">
+              <i class="bi bi-save-fill"></i> Save CV
+            </button>
+
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary w-100">
+              Cancel
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </form>
+</div>
+
+<style>
+  .editor-page {
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .editor-header h1 {
+    font-size: 52px;
+    font-weight: 900;
+  }
+
+  .editor-header p {
+    font-size: 21px;
+    color: #64748b;
+  }
+
+  .card h3 {
+    font-size: 26px;
+    font-weight: 850;
+    margin-bottom: 8px;
+  }
+
+  .card p {
+    font-size: 16px;
+  }
+
+  .sticky-save {
+    position: sticky;
+    top: 30px;
+  }
+
+  input[type="file"] {
+    padding: 12px;
+    background: #f8fafc;
+  }
+</style>
+
+{% endblock %}

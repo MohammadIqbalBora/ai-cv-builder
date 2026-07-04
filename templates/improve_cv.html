@@ -1,24 +1,27 @@
-<h2>Improve CV with AI</h2>
+{% extends 'base.html' %} {% block content %}
 
-<p><strong>{{ cv.full_name }}</strong></p>
+<h2>AI CV Improvement</h2>
 
-<form method="post">
-  {% csrf_token %}
-  <textarea
-    name="job_description"
-    rows="10"
-    cols="80"
-    placeholder="Paste job description here..."
-  ></textarea>
-  <br /><br />
-  <button type="submit">Improve CV</button>
-</form>
+<p><strong>CV Owner:</strong> {{ cv.full_name }}</p>
 
 <hr />
 
-{% if improved %}
-<h3>AI Result</h3>
-<pre>{{ improved }}</pre>
-{% endif %}
+{% if improved_cv %}
 
-<a href="http://127.0.0.1:8000/dashboard/">Back to Dashboard</a>
+<h4>Improved CV (AI Result)</h4>
+
+<div class="card p-3">
+  <pre style="white-space: pre-wrap">{{ improved_cv }}</pre>
+</div>
+
+<a href="{% url 'dashboard' %}" class="btn btn-primary mt-3">
+  Back to Dashboard
+</a>
+
+{% else %}
+
+<p>No AI output yet. Click improve from dashboard.</p>
+
+<a href="{% url 'dashboard' %}" class="btn btn-secondary"> Go Back </a>
+
+{% endif %} {% endblock %}

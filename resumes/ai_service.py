@@ -1,60 +1,139 @@
-from openai import OpenAI
 import os
+from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+class AIService:
+    def __init__(self):
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def improve_cv(cv_text, job_description):
-    prompt = f"""
-You are a professional CV writer.
+    # --------------------------------------------------
+    # MAIN AI: CV IMPROVEMENT
+    # --------------------------------------------------
+    def improve_cv(self, cv_text, template="modern"):
+        prompt = self._build_cv_prompt(cv_text, template)
 
-Rewrite and improve this CV to match the job description.
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a professional CV writing assistant."},
+                {"role": "user", "content": prompt}
+            ]
+        )
 
-CV:
-{cv_text}
+        return response.choices[0].message.content
 
-Job Description:
-{job_description}
+    # --------------------------------------------------
+    # MAIN AI: COVER LETTER
+    # --------------------------------------------------
+    def generate_cover_letter(self, cv_text, job_description, template="modern"):
+        prompt = self._build_cover_letter_prompt(cv_text, job_description, template)
 
-Return:
-- Improved CV
-- Better formatting
-- ATS-friendly wording
-"""
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a professional cover letter writer."},
+                {"role": "user", "content": prompt}
+            ]
+        )
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful CV writing assistant."},
-            {"role": "user", "content": prompt}
+        return response.choices[0].message.content
+
+    # --------------------------------------------------
+    # 🧠 NEW: AI TEMPLATE SELECTOR
+    # --------------------------------------------------
+    def suggest_template(self, job_title: str, summary: str = "", skills: str = ""):
+        """
+        Auto-select best CV template based on role.
+        Returns: modern | classic | executive
+        """
+
+        text = f"{job_title} {summary} {skills}".lower()
+
+        executive_keywords = [
+            "manager", "director", "head", "chief", "ceo",
+            "lead", "senior manager", "operations", "consultant",
+            "executive", "vp"
         ]
-    )
 
-    return response.choices[0].message.content
+        modern_keywords = [
+            "developer", "engineer", "software", "data",
+            "designer", "ui", "ux", "frontend", "backend",
+            "full stack", "programmer", "it"
+        ]
 
-def generate_cover_letter(cv_text, job_description):
-    from openai import OpenAI
-    from django.conf import settings
+        classic_keywords = [
+            "admin", "assistant", "clerk", "receptionist",
+            "customer service", "support", "entry", "junior",
+            "coordinator"
+        ]
 
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        if any(k in text for k in executive_keywords):
+            return "executive"
 
-    prompt = f"""
-You are a professional cover letter writer.
+        if any(k in text for k in modern_keywords):
+            return "modern"
 
-Write a strong cover letter based on:
+        if any(k in text for k in classic_keywords):
+            return "classic"
+
+        return "modern"
+
+    # --------------------------------------------------
+    # TEMPLATE-AWARE PROMPTS (CV)
+    # --------------------------------------------------
+    def _build_cv_prompt(self, cv_text, template):
+        if template == "modern":
+            style = """
+Write a modern ATS-optimised CV.
+- concise bullet points
+- keyword rich
+- no long paragraphs
+- focus on skills + achievements
+"""
+        elif template == "executive":
+            style = """
+Write a senior executive CV.
+- formal tone
+- leadership emphasis
+- strategic achievements
+- impactful language
+"""
+        else:
+            style = """
+Write a traditional CV.
+- detailed descriptions
+- structured paragraphs
+- balanced tone
+"""
+
+        return f"""
+{style}
+
+Improve and rewrite this CV:
+
+{cv_text}
+"""
+
+    # --------------------------------------------------
+    # TEMPLATE-AWARE PROMPTS (COVER LETTER)
+    # --------------------------------------------------
+    def _build_cover_letter_prompt(self, cv_text, job_description, template):
+        if template == "modern":
+            style = "Keep it concise, direct, and ATS-friendly."
+        elif template == "executive":
+            style = "Use a formal, leadership-focused tone."
+        else:
+            style = "Use a professional but traditional tone."
+
+        return f"""
+Write a cover letter based on this CV and job description.
+
+Style rules:
+{style}
 
 CV:
 {cv_text}
 
 Job Description:
 {job_description}
-
-Make it professional, concise, and tailored.
 """
-
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    return response.choices[0].message.content

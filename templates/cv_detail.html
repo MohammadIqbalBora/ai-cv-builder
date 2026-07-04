@@ -1,0 +1,83 @@
+{% extends 'base.html' %} {% block content %}
+
+<h2>CV Preview</h2>
+
+{% if cv.template == "modern" %}
+
+<div class="card p-4 border-primary">
+  <h1>{{ cv.full_name }}</h1>
+  <p><strong>{{ cv.job_title }}</strong></p>
+
+  <hr />
+
+  <h4>Summary</h4>
+  <p>{{ cv.professional_summary }}</p>
+
+  <h4>Skills</h4>
+  <p>{{ cv.skills }}</p>
+
+  <h4>Experience</h4>
+  <p>{{ cv.experience }}</p>
+
+  <h4>Education</h4>
+  <p>{{ cv.education }}</p>
+</div>
+
+{% elif cv.template == "classic" %}
+
+<div class="card p-4">
+  <h2>{{ cv.full_name }}</h2>
+  <p>{{ cv.email }} | {{ cv.phone }}</p>
+
+  <hr />
+
+  <h3>Professional Summary</h3>
+  <p>{{ cv.professional_summary }}</p>
+
+  <h3>Experience</h3>
+  <p>{{ cv.experience }}</p>
+
+  <h3>Education</h3>
+  <p>{{ cv.education }}</p>
+
+  <h3>Skills</h3>
+  <p>{{ cv.skills }}</p>
+</div>
+
+{% elif cv.template == "executive" %}
+
+<div class="card p-4 border-dark bg-light">
+  <h1 style="text-transform: uppercase">{{ cv.full_name }}</h1>
+
+  <p><strong>{{ cv.job_title }}</strong></p>
+
+  <hr />
+
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Summary</h4>
+      <p>{{ cv.professional_summary }}</p>
+    </div>
+
+    <div class="col-md-6">
+      <h4>Skills</h4>
+      <p>{{ cv.skills }}</p>
+    </div>
+  </div>
+
+  <hr />
+
+  <h4>Experience</h4>
+  <p>{{ cv.experience }}</p>
+
+  <h4>Education</h4>
+  <p>{{ cv.education }}</p>
+</div>
+
+{% endif %}
+
+<a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">
+  Back to Dashboard
+</a>
+
+{% endblock %}

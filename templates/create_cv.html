@@ -1,34 +1,131 @@
-{% extends 'base.html' %}
-
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 
 <div class="cv-form-page screen-page">
   <div class="form-header">
     <div>
-      <span class="badge bg-primary">CV Builder</span>
-      <h1>Create / Edit CV</h1>
-      <p>Complete each section below to build a professional CV.</p>
+      {% if cv %}
+      <span class="badge bg-primary">
+        <i class="bi bi-pencil-square"></i> Edit CV
+      </span>
+
+      <h1>Edit Your Professional CV</h1>
+
+      <p>
+        Review your AI imported information, make any changes you need, then
+        save your professional CV.
+      </p>
+
+      {% else %}
+
+      <span class="badge bg-success">
+        <i class="bi bi-plus-circle"></i> Create CV
+      </span>
+
+      <h1>Create a New Professional CV</h1>
+
+      <p>
+        Build your CV manually or upload an existing CV and let AI complete the
+        form for you.
+      </p>
+
+      {% endif %}
     </div>
 
     <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left"></i> Back to Dashboard
+      <i class="bi bi-arrow-left"></i>
+      Back to Dashboard
     </a>
   </div>
 
-  <form method="POST" enctype="multipart/form-data" class="cv-form-grid">
-    {% csrf_token %}
+  {% if missing_fields %}
 
-    {% if form.errors %}
-      <div class="alert alert-danger form-error-box">
-        {{ form.errors }}
+  <div class="alert alert-warning shadow-sm border-0 rounded-4 mb-4">
+    <h4 class="mb-3">
+      <i class="bi bi-robot text-primary"></i>
+      AI Import Results
+    </h4>
+
+    <p class="mb-3">
+      Your CV has been analysed successfully. Please review all information
+      before saving.
+    </p>
+
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-success">
+          <i class="bi bi-check-circle-fill"></i>
+          Information Found
+        </h6>
+
+        <ul class="mb-0">
+          {% if cv.full_name %}
+          <li>Full Name</li>
+          {% endif %} {% if cv.job_title %}
+          <li>Job Title</li>
+          {% endif %} {% if cv.email %}
+          <li>Email</li>
+          {% endif %} {% if cv.phone %}
+          <li>Phone</li>
+          {% endif %} {% if cv.professional_summary %}
+          <li>Professional Summary</li>
+          {% endif %} {% if cv.skills %}
+          <li>Skills</li>
+          {% endif %} {% if cv.experience %}
+          <li>Experience</li>
+          {% endif %} {% if cv.education %}
+          <li>Education</li>
+          {% endif %}
+        </ul>
       </div>
+
+      <div class="col-md-6">
+        <h6 class="text-warning">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Information Not Found
+        </h6>
+
+        {% if missing_fields %}
+
+        <ul class="mb-3">
+          {% for field in missing_fields %}
+          <li>{{ field }}</li>
+          {% endfor %}
+        </ul>
+
+        <small class="text-muted">
+          These fields are optional. You can complete them manually or leave
+          them blank if you do not want them shown on your final CV.
+        </small>
+
+        {% else %}
+
+        <p class="text-success mb-0">
+          Excellent! AI found all major sections of your CV.
+        </p>
+
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+
+  <form method="POST" enctype="multipart/form-data" class="cv-form-grid">
+    {% csrf_token %} {% if form.errors %}
+    <div class="alert alert-danger form-error-box">{{ form.errors }}</div>
     {% endif %}
 
     <div class="form-main">
       <section class="card form-section">
         <div class="card-body">
-          <h3><i class="bi bi-person-fill text-primary"></i> Personal Details</h3>
-          <p class="text-muted small mb-3">Add the core information recruiters will see first.</p>
+          <h3>
+            <i class="bi bi-person-fill text-primary"></i>
+            Personal Details
+          </h3>
+
+          <p class="text-muted small mb-3">
+            Add the personal information you would like recruiters to see.
+          </p>
 
           <div class="row g-3">
             <div class="col-md-6">
@@ -61,25 +158,33 @@
 
       <section class="card form-section">
         <div class="card-body">
-          <h3><i class="bi bi-card-text text-primary"></i> Professional Summary</h3>
-          <p class="text-muted small mb-3">Write a concise overview of your experience and value.</p>
-          <label>Professional Summary</label>
+          <h3>
+            <i class="bi bi-card-text text-primary"></i>
+            Professional Summary
+          </h3>
+
           {{ form.professional_summary }}
         </div>
       </section>
 
       <section class="card form-section">
         <div class="card-body">
-          <h3><i class="bi bi-briefcase-fill text-primary"></i> Experience</h3>
-          <label>Experience</label>
+          <h3>
+            <i class="bi bi-briefcase-fill text-primary"></i>
+            Experience
+          </h3>
+
           {{ form.experience }}
         </div>
       </section>
 
       <section class="card form-section">
         <div class="card-body">
-          <h3><i class="bi bi-mortarboard-fill text-primary"></i> Education</h3>
-          <label>Education</label>
+          <h3>
+            <i class="bi bi-mortarboard-fill text-primary"></i>
+            Education
+          </h3>
+
           {{ form.education }}
         </div>
       </section>
@@ -88,38 +193,77 @@
     <aside class="form-side">
       <section class="card form-section">
         <div class="card-body">
-          <h3><i class="bi bi-stars text-primary"></i> Skills</h3>
-          <label>Skills</label>
+          <h3>
+            <i class="bi bi-stars text-primary"></i>
+            Skills
+          </h3>
+
           {{ form.skills }}
         </div>
       </section>
 
       <section class="card form-section">
         <div class="card-body">
-          <h3><i class="bi bi-palette-fill text-primary"></i> Template</h3>
-          <label>CV Template</label>
+          <h3>
+            <i class="bi bi-palette-fill text-primary"></i>
+            Template
+          </h3>
+
           {{ form.template }}
         </div>
       </section>
 
       <section class="card form-section">
         <div class="card-body">
-          <h3><i class="bi bi-upload text-primary"></i> Upload Existing CV</h3>
-          <label>Uploaded CV</label>
+          <h3>
+            <i class="bi bi-upload text-primary"></i>
+            Upload Existing CV
+          </h3>
+
           {{ form.uploaded_file }}
+
+          <button
+  type="submit"
+  name="action"
+  value="import"
+  formnovalidate
+  class="btn btn-success w-100 mt-3"
+  id="importCvBtn"
+>
+  <i class="bi bi-magic"></i>
+  Import & Fill CV Fields
+</button>
+
+<p id="importStatus" class="text-muted small mt-2 d-none">
+  <i class="bi bi-hourglass-split"></i>
+  Please wait while AI analyses your CV...
+</p>
         </div>
       </section>
 
       <section class="card save-panel">
         <div class="card-body">
-          <h3>Ready to save?</h3>
-          <p class="text-muted small mb-3">Your CV will be updated instantly once you save.</p>
+          <h3>Save Your CV</h3>
 
-          <button type="submit" class="btn btn-primary w-100 mb-3">
-            <i class="bi bi-save-fill"></i> Save CV
+          <p class="text-muted small mb-3">
+            Once saved, your CV will be available from your dashboard and can be
+            improved with AI, exported to PDF or used to generate cover letters.
+          </p>
+
+          <button
+            type="submit"
+            name="action"
+            value="save"
+            class="btn btn-primary w-100 mb-3"
+          >
+            <i class="bi bi-save-fill"></i>
+            Save CV
           </button>
 
-          <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary w-100">
+          <a
+            href="{% url 'dashboard' %}"
+            class="btn btn-outline-secondary w-100"
+          >
             Cancel
           </a>
         </div>
@@ -128,4 +272,20 @@
   </form>
 </div>
 
+<script>
+  const form = document.querySelector("form");
+  const importBtn = document.getElementById("importCvBtn");
+  const importStatus = document.getElementById("importStatus");
+
+  if (form && importBtn) {
+    importBtn.addEventListener("click", function () {
+      importStatus.classList.remove("d-none");
+
+      setTimeout(function () {
+        importBtn.innerHTML =
+          '<span class="spinner-border spinner-border-sm me-2"></span> AI is importing...';
+      }, 50);
+    });
+  }
+</script>
 {% endblock %}

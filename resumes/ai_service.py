@@ -1,4 +1,6 @@
+import json
 import os
+
 from openai import OpenAI
 
 
@@ -6,130 +8,159 @@ class AIService:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    # --------------------------------------------------
-    # MAIN AI: CV IMPROVEMENT
-    # --------------------------------------------------
     def improve_cv(self, cv_text, template="modern"):
         prompt = self._build_cv_prompt(cv_text, template)
 
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a professional CV writing assistant."},
-                {"role": "user", "content": prompt}
-            ]
+                {
+                    "role": "system",
+                    "content": "You are a professional CV writing assistant.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
         )
 
         return response.choices[0].message.content
 
-    # --------------------------------------------------
-    # MAIN AI: COVER LETTER
-    # --------------------------------------------------
     def generate_cover_letter(self, cv_text, job_description, template="modern"):
-        prompt = self._build_cover_letter_prompt(cv_text, job_description, template)
+        prompt = self._build_cover_letter_prompt(
+            cv_text,
+            job_description,
+            template,
+        )
 
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a professional cover letter writer."},
-                {"role": "user", "content": prompt}
-            ]
+                {
+                    "role": "system",
+                    "content": "You are a professional cover letter writer.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
         )
 
         return response.choices[0].message.content
 
-    # --------------------------------------------------
-    # 🧠 NEW: AI TEMPLATE SELECTOR
-    # --------------------------------------------------
-    def suggest_template(self, job_title: str, summary: str = "", skills: str = ""):
-        """
-        Auto-select best CV template based on role.
-        Returns: modern | classic | executive
-        """
+    def parse_uploaded_cv(self, extracted_text):
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a professional CV writer and recruiter. "
+                        "Return valid JSON only. Every value must be plain text."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+Act as a professional CV writer and editor.
 
+I will provide raw text extracted from an uploaded CV.
+
+Your task is to:
+1. Restructure the CV into clean professional sections.
+2. Create a strong professional summary if the original is missing or weak.
+3. Remove duplicate repeated job descriptions.
+4. Group skills logically.
+5. Rewrite experience bullet points using strong action verbs.
+6. Keep facts accurate. Do not invent jobs, companies, dates or qualifications.
+7. Use clear UK CV formatting.
+
+Return JSON only with these exact keys:
+
+full_name
+job_title
+email
+phone
+address
+professional_summary
+skills
+experience
+education
+
+Rules:
+- Every value must be a plain text string.
+- Do not return lists, arrays or dictionaries.
+- Do not include markdown.
+- If a field is missing, return an empty string.
+- Address must be empty if no address is found.
+
+professional_summary:
+Write 2-3 strong sentences based on the candidate's background.
+
+skills:
+Group skills clearly like this:
+Operating Systems:
+• Red Hat 7
+• Solaris 7-10
+
+Hardware:
+• HP Servers
+• Dell Hardware
+
+Tools:
+• VMware
+• ITIL
+• CMDB
+
+experience:
+Use this format for each role:
+
+Company Name
+Job Title
+Dates
+• Action-focused responsibility or achievement
+• Action-focused responsibility or achievement
+• Action-focused responsibility or achievement
+
+education:
+Include courses, certifications and qualifications only.
+One item per line.
+
+CV TEXT:
+{extracted_text}
+""",
+                },
+            ],
+        )
+
+        return json.loads(response.choices[0].message.content)
+
+    def suggest_template(self, job_title="", summary="", skills=""):
         text = f"{job_title} {summary} {skills}".lower()
 
-        executive_keywords = [
-            "manager", "director", "head", "chief", "ceo",
-            "lead", "senior manager", "operations", "consultant",
-            "executive", "vp"
-        ]
-
-        modern_keywords = [
-            "developer", "engineer", "software", "data",
-            "designer", "ui", "ux", "frontend", "backend",
-            "full stack", "programmer", "it"
-        ]
-
-        classic_keywords = [
-            "admin", "assistant", "clerk", "receptionist",
-            "customer service", "support", "entry", "junior",
-            "coordinator"
-        ]
-
-        if any(k in text for k in executive_keywords):
+        if any(word in text for word in ["manager", "director", "executive", "lead"]):
             return "executive"
 
-        if any(k in text for k in modern_keywords):
+        if any(word in text for word in ["developer", "engineer", "software", "it"]):
             return "modern"
 
-        if any(k in text for k in classic_keywords):
-            return "classic"
+        return "classic"
 
-        return "modern"
-
-    # --------------------------------------------------
-    # TEMPLATE-AWARE PROMPTS (CV)
-    # --------------------------------------------------
     def _build_cv_prompt(self, cv_text, template):
-        if template == "modern":
-            style = """
-Write a modern ATS-optimised CV.
-- concise bullet points
-- keyword rich
-- no long paragraphs
-- focus on skills + achievements
-"""
-        elif template == "executive":
-            style = """
-Write a senior executive CV.
-- formal tone
-- leadership emphasis
-- strategic achievements
-- impactful language
-"""
-        else:
-            style = """
-Write a traditional CV.
-- detailed descriptions
-- structured paragraphs
-- balanced tone
-"""
-
         return f"""
-{style}
+Improve this CV professionally.
+Use clear sections and bullet points.
 
-Improve and rewrite this CV:
-
+CV:
 {cv_text}
 """
 
-    # --------------------------------------------------
-    # TEMPLATE-AWARE PROMPTS (COVER LETTER)
-    # --------------------------------------------------
     def _build_cover_letter_prompt(self, cv_text, job_description, template):
-        if template == "modern":
-            style = "Keep it concise, direct, and ATS-friendly."
-        elif template == "executive":
-            style = "Use a formal, leadership-focused tone."
-        else:
-            style = "Use a professional but traditional tone."
-
         return f"""
-Write a cover letter based on this CV and job description.
-
-Style rules:
-{style}
+Write a professional cover letter.
 
 CV:
 {cv_text}

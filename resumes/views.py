@@ -3,11 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from .cv_parser import extract_text_from_cv, parse_cv_text
 
 import stripe
 
 from .ai_service import AIService
+from .cv_parser import extract_text_from_cv, parse_cv_text
 from .forms import CVForm
 from .models import CV, Subscription
 from .pdf_templates import (
@@ -44,8 +44,6 @@ def dashboard(request):
         plan_name = subscription.plan_name
 
     total_cvs = cvs.count()
-    ai_improvements_used = total_cvs
-    cover_letters_generated = total_cvs
 
     return render(
         request,
@@ -54,23 +52,78 @@ def dashboard(request):
             "cvs": cvs,
             "selected_cv": selected_cv,
             "total_cvs": total_cvs,
-            "ai_improvements_used": ai_improvements_used,
-            "cover_letters_generated": cover_letters_generated,
+            "ai_improvements_used": total_cvs,
+            "cover_letters_generated": total_cvs,
             "is_premium": is_premium,
             "plan_name": plan_name,
         },
     )
 
 
+def import_data_into_cv(cv, parsed_data):
+    cv.full_name = parsed_data.get("full_name") or cv.full_name
+    cv.job_title = parsed_data.get("job_title") or cv.job_title
+    cv.email = parsed_data.get("email") or cv.email
+    cv.phone = parsed_data.get("phone") or cv.phone
+    cv.address = parsed_data.get("address") or cv.address
+
+    cv.professional_summary = (
+        parsed_data.get("professional_summary") or cv.professional_summary
+    )
+
+    cv.skills = parsed_data.get("skills") or cv.skills
+    cv.experience = parsed_data.get("experience") or cv.experience
+    cv.education = parsed_data.get("education") or cv.education
+
+    cv.save()
+
+
+def parse_cv_with_ai_or_fallback(extracted_text):
+    try:
+        ai = AIService()
+        return ai.parse_uploaded_cv(extracted_text)
+    except Exception as e:
+        print("AI import failed, using basic parser:", e)
+        return parse_cv_text(extracted_text)
+
+
 @login_required
 def create_cv(request):
     if request.method == "POST":
+        action = request.POST.get("action")
+
+        # Import CV using AI - do NOT validate empty form fields first
+        if action == "import":
+            uploaded_file = request.FILES.get("uploaded_file")
+
+            if not uploaded_file:
+                form = CVForm(request.POST, request.FILES)
+                form.add_error("uploaded_file", "Please choose a CV file to import.")
+                return render(request, "create_cv.html", {"form": form})
+
+            cv = CV.objects.create(
+                user=request.user,
+                full_name="Imported CV",
+                uploaded_file=uploaded_file,
+                template=request.POST.get("template", "modern"),
+            )
+
+            extracted_text = extract_text_from_cv(cv.uploaded_file.path)
+            parsed_data = parse_cv_with_ai_or_fallback(extracted_text)
+
+            import_data_into_cv(cv, parsed_data)
+
+            return redirect("edit_cv", id=cv.id)
+
+        # Normal save CV
         form = CVForm(request.POST, request.FILES)
+
         if form.is_valid():
             cv = form.save(commit=False)
             cv.user = request.user
             cv.save()
             return redirect("dashboard")
+
     else:
         form = CVForm()
 
@@ -81,15 +134,44 @@ def create_cv(request):
 def edit_cv(request, id):
     cv = get_object_or_404(CV, id=id, user=request.user)
 
+    missing_fields = []
+
+    if not cv.email:
+        missing_fields.append("Email")
+    if not cv.phone:
+        missing_fields.append("Phone")
+    if not cv.address:
+        missing_fields.append("Address")
+    if not cv.job_title:
+        missing_fields.append("Job Title")
+    if not cv.professional_summary:
+        missing_fields.append("Professional Summary")
+    if not cv.skills:
+        missing_fields.append("Skills")
+    if not cv.experience:
+        missing_fields.append("Experience")
+    if not cv.education:
+        missing_fields.append("Education")
+
     if request.method == "POST":
         form = CVForm(request.POST, request.FILES, instance=cv)
+
         if form.is_valid():
             form.save()
             return redirect("dashboard")
+
     else:
         form = CVForm(instance=cv)
 
-    return render(request, "create_cv.html", {"form": form})
+    return render(
+        request,
+        "create_cv.html",
+        {
+            "form": form,
+            "cv": cv,
+            "missing_fields": missing_fields,
+        },
+    )
 
 
 @login_required
@@ -197,13 +279,7 @@ def pricing(request):
     if subscription and subscription.is_active:
         is_premium = True
 
-    return render(
-        request,
-        "pricing.html",
-        {
-            "is_premium": is_premium,
-        },
-    )
+    return render(request, "pricing.html", {"is_premium": is_premium})
 
 
 @login_required
@@ -254,6 +330,7 @@ def stripe_webhook(request):
             sig_header,
             endpoint_secret,
         )
+
     except Exception as e:
         print("Webhook verification error:", e)
         return HttpResponse(status=400)
@@ -263,9 +340,6 @@ def stripe_webhook(request):
 
         metadata = session.get("metadata") or {}
         user_id = metadata.get("user_id")
-
-        print("SESSION METADATA:", metadata)
-        print("USER ID:", user_id)
 
         if user_id:
             subscription, _created = Subscription.objects.get_or_create(user_id=user_id)
@@ -289,19 +363,10 @@ def import_uploaded_cv(request, id):
         extracted_text = extract_text_from_cv(cv.uploaded_file.path)
 
         if request.method == "POST":
-            parsed_data = parse_cv_text(extracted_text)
+            parsed_data = parse_cv_with_ai_or_fallback(extracted_text)
 
-            cv.full_name = parsed_data.get("full_name") or cv.full_name
-            cv.email = parsed_data.get("email") or cv.email
-            cv.phone = parsed_data.get("phone") or cv.phone
-            cv.professional_summary = (
-                parsed_data.get("professional_summary") or cv.professional_summary
-            )
-            cv.skills = parsed_data.get("skills") or cv.skills
-            cv.experience = parsed_data.get("experience") or cv.experience
-            cv.education = parsed_data.get("education") or cv.education
+            import_data_into_cv(cv, parsed_data)
 
-            cv.save()
             return redirect("edit_cv", id=cv.id)
 
     return render(

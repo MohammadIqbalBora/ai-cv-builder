@@ -1,146 +1,85 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
 {% block content %}
 
-<div class="container-fluid template-page">
-  <div class="text-center mb-5 template-header">
-    <span class="badge bg-primary mb-3"> PDF Export </span>
-
-    <h1 class="display-4 fw-bold">Choose Your CV Template</h1>
-
-    <p class="fs-4 text-muted">
-      Select a professional template before downloading your CV.
-    </p>
-  </div>
-
-  <div class="row g-5 justify-content-center">
-    <!-- MODERN -->
-
-    <div class="col-lg-4">
-      <div class="card h-100 shadow-lg">
-        <img
-          src="https://placehold.co/650x900/f8fafc/0f172a?text=Modern+CV"
-          class="card-img-top"
-        />
-
-        <div class="card-body">
-          <h2 class="fw-bold">Modern</h2>
-
-          <p class="text-muted">
-            Clean, ATS-friendly and ideal for technology, software development
-            and modern businesses.
-          </p>
-
-          <ul>
-            <li>✔ ATS Optimised</li>
-
-            <li>✔ Modern Layout</li>
-
-            <li>✔ Professional Colours</li>
-
-            <li>✔ Easy to Read</li>
-          </ul>
-
-          <a
-            href="{% url 'download_cv_pdf' cv.id %}?template=modern"
-            class="btn btn-primary w-100"
-          >
-            <i class="bi bi-download"></i>
-
-            Download Modern
-          </a>
-        </div>
-      </div>
+<section class="template-page">
+  <header class="template-header">
+    <div>
+      <span class="badge bg-primary">PDF Export</span>
+      <h1>Choose Your CV Template</h1>
+      <p>Select a professional template before downloading your CV.</p>
     </div>
 
-    <!-- CLASSIC -->
-
-    <div class="col-lg-4">
-      <div class="card h-100 shadow-lg">
-        <img
-          src="https://placehold.co/650x900/ffffff/111827?text=Classic+CV"
-          class="card-img-top"
-        />
-
-        <div class="card-body">
-          <h2 class="fw-bold">Classic</h2>
-
-          <p class="text-muted">
-            Traditional professional layout suitable for administration, finance
-            and public sector.
-          </p>
-
-          <ul>
-            <li>✔ Traditional Style</li>
-
-            <li>✔ Recruiter Friendly</li>
-
-            <li>✔ Professional Appearance</li>
-
-            <li>✔ Clear Sections</li>
-          </ul>
-
-          <a
-            href="{% url 'download_cv_pdf' cv.id %}?template=classic"
-            class="btn btn-dark w-100"
-          >
-            <i class="bi bi-download"></i>
-
-            Download Classic
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- EXECUTIVE -->
-
-    <div class="col-lg-4">
-      <div class="card h-100 shadow-lg border-primary template-card">
-        <img
-          src="https://placehold.co/650x900/eff6ff/2563eb?text=Executive+CV"
-          class="card-img-top"
-        />
-
-        <div class="card-body">
-          <span class="badge bg-warning text-dark mb-3"> Most Popular </span>
-
-          <h2 class="fw-bold">Executive</h2>
-
-          <p class="text-muted">
-            Premium executive template designed for management, leadership and
-            senior professionals.
-          </p>
-
-          <ul>
-            <li>✔ Premium Design</li>
-
-            <li>✔ Executive Layout</li>
-
-            <li>✔ High Impact</li>
-
-            <li>✔ Elegant Typography</li>
-          </ul>
-
-          <a
-            href="{% url 'download_cv_pdf' cv.id %}?template=executive"
-            class="btn btn-success w-100"
-          >
-            <i class="bi bi-download"></i>
-
-            Download Executive
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="text-center mt-5">
-    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-lg">
-      <i class="bi bi-arrow-left"></i>
-
-      Back to Dashboard
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Dashboard
     </a>
+  </header>
+
+  <div class="template-grid">
+    <article class="card template-card">
+      <div class="template-preview modern-preview">
+        <h2>Modern CV</h2>
+      </div>
+
+      <div class="card-body">
+        <h3>Modern</h3>
+        <p>Clean, ATS-friendly and ideal for technology and modern businesses.</p>
+
+        <ul>
+          <li>ATS Optimised</li>
+          <li>Modern Layout</li>
+          <li>Professional Colours</li>
+        </ul>
+
+        <a href="{% url 'download_cv_pdf' cv.id %}?template=modern" class="btn btn-primary w-100">
+          <i class="bi bi-download"></i> Download Modern
+        </a>
+      </div>
+    </article>
+
+    <article class="card template-card">
+      <div class="template-preview classic-preview">
+        <h2>Classic CV</h2>
+      </div>
+
+      <div class="card-body">
+        <h3>Classic</h3>
+        <p>Traditional professional layout suitable for administration and finance.</p>
+
+        <ul>
+          <li>Traditional Style</li>
+          <li>Recruiter Friendly</li>
+          <li>Clear Sections</li>
+        </ul>
+
+        <a href="{% url 'download_cv_pdf' cv.id %}?template=classic" class="btn btn-dark w-100">
+          <i class="bi bi-download"></i> Download Classic
+        </a>
+      </div>
+    </article>
+
+    <article class="card template-card template-card-featured">
+      <div class="template-preview executive-preview">
+        <span class="badge bg-warning text-dark">Most Popular</span>
+        <h2>Executive CV</h2>
+      </div>
+
+      <div class="card-body">
+        <h3>Executive</h3>
+        <p>Premium executive template for leadership and senior professionals.</p>
+
+        <ul>
+          <li>Premium Design</li>
+          <li>Executive Layout</li>
+          <li>Elegant Typography</li>
+        </ul>
+
+        <a href="{% url 'download_cv_pdf' cv.id %}?template=executive" class="btn btn-success w-100">
+          <i class="bi bi-download"></i> Download Executive
+        </a>
+      </div>
+    </article>
   </div>
-</div>
+</section>
 
 {% endblock %}

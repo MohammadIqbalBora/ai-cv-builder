@@ -5,7 +5,6 @@
 {% if cvs %}
 
 <div class="dashboard-page">
-
   <aside class="dashboard-sidebar">
     <div class="sidebar-title">
       <h3>My CVs</h3>
@@ -16,7 +15,10 @@
 
     <div class="sidebar-list">
       {% for cv in cvs %}
-      <a href="{% url 'dashboard' %}?cv={{ cv.id }}" class="sidebar-cv {% if selected_cv.id == cv.id %}active{% endif %}">
+      <a
+        href="{% url 'dashboard' %}?cv={{ cv.id }}"
+        class="sidebar-cv {% if selected_cv.id == cv.id %}active{% endif %}"
+      >
         <div class="sidebar-icon">
           <i class="bi bi-file-earmark-text"></i>
         </div>
@@ -40,16 +42,15 @@
   </aside>
 
   <main class="dashboard-main">
-
     <div class="dashboard-header">
       <div>
         <h1>Welcome back, {{ user.first_name|default:user.username }} 👋</h1>
         <p>Create, manage and improve your professional CVs with AI.</p>
 
         {% if is_premium %}
-          <span class="badge bg-success">Current Plan: {{ plan_name }}</span>
+        <span class="badge bg-success">Current Plan: {{ plan_name }}</span>
         {% else %}
-          <span class="badge bg-secondary">Current Plan: Free</span>
+        <span class="badge bg-secondary">Current Plan: Free</span>
         {% endif %}
       </div>
 
@@ -81,7 +82,10 @@
           <h2>{{ selected_cv.full_name }}</h2>
           <h4>{{ selected_cv.job_title|default:"No job title added" }}</h4>
         </div>
-        <span class="badge bg-dark">{{ selected_cv.get_template_display }}</span>
+
+        <span class="badge bg-dark">
+          {{ selected_cv.get_template_display }}
+        </span>
       </div>
 
       <hr />
@@ -89,29 +93,37 @@
       <div class="preview-content">
         <div class="preview-left">
           <h3>Professional Summary</h3>
-          <p>{{ selected_cv.professional_summary|default:"No professional summary added yet." }}</p>
+          <p>
+            {{ selected_cv.professional_summary|default:"No professional summary added yet." }}
+          </p>
 
           <h3>Experience</h3>
-          <p class="preserve-lines">{{ selected_cv.experience|default:"No experience added yet." }}</p>
+          <p class="preserve-lines">
+            {{ selected_cv.experience|default:"No experience added yet." }}
+          </p>
         </div>
 
         <div class="preview-right">
           <h3>Skills</h3>
-          <p class="preserve-lines">{{ selected_cv.skills|default:"No skills added yet." }}</p>
+          <p class="preserve-lines">
+            {{ selected_cv.skills|default:"No skills added yet." }}
+          </p>
 
           <h3>Education</h3>
-          <p class="preserve-lines">{{ selected_cv.education|default:"No education added yet." }}</p>
+          <p class="preserve-lines">
+            {{ selected_cv.education|default:"No education added yet." }}
+          </p>
         </div>
       </div>
 
       {% if selected_cv.uploaded_file %}
-      <div class="preview-upload-actions">
-        <a href="{{ selected_cv.uploaded_file.url }}" target="_blank" class="btn btn-outline-dark btn-sm">
+      <div class="mt-4">
+        <a
+          href="{{ selected_cv.uploaded_file.url }}"
+          target="_blank"
+          class="btn btn-outline-dark"
+        >
           <i class="bi bi-paperclip"></i> View Uploaded CV
-        </a>
-
-        <a href="{% url 'import_uploaded_cv' selected_cv.id %}" class="btn btn-outline-primary btn-sm">
-          <i class="bi bi-download"></i> Import CV Text
         </a>
       </div>
       {% endif %}
@@ -138,7 +150,6 @@
         </a>
       </div>
     </section>
-
   </main>
 </div>
 
@@ -146,7 +157,9 @@
 
 <div class="card shadow p-5 text-center">
   <h2>No CVs Yet</h2>
-  <p class="text-muted fs-4">Create your first professional AI-powered CV.</p>
+  <p class="text-muted fs-4">
+    Create your first professional AI-powered CV.
+  </p>
 
   <a href="{% url 'create_cv' %}" class="btn btn-primary btn-lg">
     Create Your First CV

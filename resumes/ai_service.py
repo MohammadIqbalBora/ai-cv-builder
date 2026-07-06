@@ -4,6 +4,90 @@ import os
 from openai import OpenAI
 
 
+def make_plain_text(value):
+    if value is None:
+        return ""
+
+    if isinstance(value, str):
+        return value.strip()
+
+    if isinstance(value, list):
+        lines = []
+
+        for item in value:
+            item_text = make_plain_text(item)
+
+            if item_text:
+                lines.append(item_text)
+
+        return "\n".join(lines)
+
+    if isinstance(value, dict):
+        lines = []
+
+        company = (
+            value.get("Company Name")
+            or value.get("company_name")
+            or value.get("company")
+        )
+        job_title = (
+            value.get("Job Title") or value.get("job_title") or value.get("title")
+        )
+        dates = value.get("Dates") or value.get("dates")
+        responsibilities = (
+            value.get("Responsibilities")
+            or value.get("responsibilities")
+            or value.get("Responsibility")
+        )
+
+        if company:
+            lines.append(make_plain_text(company))
+
+        if job_title:
+            lines.append(make_plain_text(job_title))
+
+        if dates:
+            lines.append(make_plain_text(dates))
+
+        if responsibilities:
+            lines.append("")
+
+            if isinstance(responsibilities, list):
+                for responsibility in responsibilities:
+                    clean_item = (
+                        make_plain_text(responsibility).replace("•", "").strip()
+                    )
+                    if clean_item:
+                        lines.append(f"•  {clean_item}")
+            else:
+                clean_item = make_plain_text(responsibilities).replace("•", "").strip()
+                if clean_item:
+                    lines.append(f"•  {clean_item}")
+
+        if lines:
+            return "\n".join(lines)
+
+        for key, item in value.items():
+            lines.append(str(key))
+            item_text = make_plain_text(item)
+            if item_text:
+                lines.append(item_text)
+
+        return "\n".join(lines)
+
+    return str(value).strip()
+
+
+def clean_ai_cv_data(data):
+    return {
+        "job_title": make_plain_text(data.get("job_title")),
+        "professional_summary": make_plain_text(data.get("professional_summary")),
+        "skills": make_plain_text(data.get("skills")),
+        "experience": make_plain_text(data.get("experience")),
+        "education": make_plain_text(data.get("education")),
+    }
+
+
 class AIService:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -137,6 +221,102 @@ CV TEXT:
         )
 
         return json.loads(response.choices[0].message.content)
+
+    def analyse_job_description(self, job_description):
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You analyse job descriptions and return valid JSON only.",
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+Analyse this job description.
+
+Return JSON only with these exact keys:
+
+job_title
+required_skills
+responsibilities
+keywords
+experience_level
+qualifications
+
+Rules:
+- Every value must be plain text.
+- Do not return lists or dictionaries.
+- Put each skill on a new line.
+- Put each responsibility on a new line.
+- Put each keyword on a new line.
+- If something is not found, return an empty string.
+
+Job description:
+
+{job_description}
+""",
+                },
+            ],
+        )
+
+        return json.loads(response.choices[0].message.content)
+
+    def tailor_cv_to_job(self, cv_text, job_description):
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a professional CV writer. " "Return valid JSON only."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+Rewrite this CV so it is tailored to the job description.
+
+Return JSON only with these exact keys:
+
+job_title
+professional_summary
+skills
+experience
+education
+
+Important rules:
+- Do not invent jobs, companies, dates, qualifications, or experience.
+- Keep facts truthful.
+- Emphasise relevant existing skills and experience.
+- Keep technical keywords from the job description where they honestly match the CV.
+- Rewrite bullet points professionally.
+- Do not include markdown.
+- Every value must be plain text only.
+- Skills should be grouped clearly.
+- Experience should keep this format:
+
+Company Name
+Job Title
+Dates
+•  Responsibility or achievement
+•  Responsibility or achievement
+•  Responsibility or achievement
+
+CV:
+{cv_text}
+
+Job Description:
+{job_description}
+""",
+                },
+            ],
+        )
+
+        raw_data = json.loads(response.choices[0].message.content)
+        return clean_ai_cv_data(raw_data)
 
     def suggest_template(self, job_title="", summary="", skills=""):
         text = f"{job_title} {summary} {skills}".lower()

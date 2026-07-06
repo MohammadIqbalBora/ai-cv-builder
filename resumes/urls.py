@@ -29,4 +29,7 @@ urlpatterns = [
         name="import_uploaded_cv",
     ),
     path("stripe/webhook/", views.stripe_webhook, name="stripe_webhook"),
+    path("job-match/<int:id>/", views.job_match, name="job_match"),
+    path("job-match/<int:id>/tailor/", views.tailor_cv_to_job, name="tailor_cv_to_job"),
+    
 ]

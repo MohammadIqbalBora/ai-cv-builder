@@ -393,3 +393,93 @@ def select_pdf_template(request, id):
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     return render(request, "pdf_templates.html", {"cv": cv})
+
+
+@login_required
+def job_match(request, id):
+    cv = get_object_or_404(CV, id=id, user=request.user)
+    analysis = None
+
+    if request.method == "POST":
+        job_description = request.POST.get("job_description", "").strip()
+        job_file = request.FILES.get("job_file")
+
+        if job_file:
+            temp_cv = CV.objects.create(
+                user=request.user,
+                full_name="Temporary Job Description File",
+                uploaded_file=job_file,
+            )
+
+            job_description = extract_text_from_cv(temp_cv.uploaded_file.path)
+            temp_cv.delete()
+
+        if job_description:
+            ai = AIService()
+            analysis = ai.analyse_job_description(job_description)
+
+            return render(
+                request,
+                "job_match.html",
+                {
+                    "cv": cv,
+                    "analysis": analysis,
+                    "job_description": job_description,
+                    "message": "Job description analysed successfully.",
+                },
+            )
+
+        return render(
+            request,
+            "job_match.html",
+            {
+                "cv": cv,
+                "message": "Please paste or upload a job description first.",
+            },
+        )
+
+    return render(request, "job_match.html", {"cv": cv})
+
+
+@login_required
+def tailor_cv_to_job(request, id):
+    cv = get_object_or_404(CV, id=id, user=request.user)
+
+    if request.method == "POST":
+        job_description = request.POST.get("job_description", "").strip()
+
+        if not job_description:
+            return redirect("job_match", id=cv.id)
+
+        cv_text = f"""
+Name: {cv.full_name}
+Job Title: {cv.job_title}
+Email: {cv.email}
+Phone: {cv.phone}
+Summary: {cv.professional_summary}
+Skills: {cv.skills}
+Experience: {cv.experience}
+Education: {cv.education}
+"""
+
+        ai = AIService()
+        tailored_data = ai.tailor_cv_to_job(cv_text, job_description)
+
+        tailored_cv = CV.objects.create(
+            user=request.user,
+            full_name=cv.full_name,
+            email=cv.email,
+            phone=cv.phone,
+            address=cv.address,
+            job_title=tailored_data.get("job_title") or cv.job_title,
+            professional_summary=tailored_data.get("professional_summary")
+            or cv.professional_summary,
+            skills=tailored_data.get("skills") or cv.skills,
+            experience=tailored_data.get("experience") or cv.experience,
+            education=tailored_data.get("education") or cv.education,
+            template=cv.template,
+        )
+
+        return redirect("edit_cv", id=tailored_cv.id)
+
+    return redirect("job_match", id=cv.id)

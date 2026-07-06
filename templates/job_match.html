@@ -107,10 +107,15 @@
 {{ job_description }}</textarea
       >
 
-      <button type="submit" class="btn btn-success">
+      <button type="submit" class="btn btn-success" id="tailorCvBtn">
         <i class="bi bi-magic"></i>
-        Tailor My CV
+        <span class="btn-text">Tailor My CV</span>
       </button>
+
+      <p id="tailorCvStatus" class="text-muted small mt-2 d-none">
+        <i class="bi bi-hourglass-split"></i>
+        Please wait while AI tailors your CV to this job description...
+      </p>
     </form>
   </div>
 
@@ -128,6 +133,22 @@
       setTimeout(function () {
         analyseJobBtn.innerHTML =
           '<span class="spinner-border spinner-border-sm me-2"></span> AI is analysing...';
+      }, 50);
+    });
+  }
+</script>
+
+<script>
+  const tailorCvBtn = document.getElementById("tailorCvBtn");
+  const tailorCvStatus = document.getElementById("tailorCvStatus");
+
+  if (tailorCvBtn) {
+    tailorCvBtn.addEventListener("click", function () {
+      tailorCvStatus.classList.remove("d-none");
+
+      setTimeout(function () {
+        tailorCvBtn.innerHTML =
+          '<span class="spinner-border spinner-border-sm me-2"></span> AI is tailoring your CV...';
       }, 50);
     });
   }

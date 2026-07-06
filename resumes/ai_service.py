@@ -339,12 +339,58 @@ CV:
 """
 
     def _build_cover_letter_prompt(self, cv_text, job_description, template):
-        return f"""
-Write a professional cover letter.
 
-CV:
+        return f"""
+You are an expert CV writer and professional recruitment consultant.
+
+Write a professional cover letter based on the candidate's CV and the job description.
+
+IMPORTANT RULES
+
+• Do NOT use placeholders like:
+    [Your Address]
+    [Employer Name]
+    [Company Name]
+
+• If the company name appears in the job description, use it.
+
+• If no hiring manager is mentioned, begin with:
+
+Dear Hiring Manager,
+
+• Do not invent names or addresses.
+
+• Keep the cover letter between 300 and 450 words.
+
+• Use information from the CV to explain why the candidate is suitable.
+
+• Mention the candidate's strongest technical skills that match the job description.
+
+• Mention achievements where appropriate.
+
+• Use a confident but professional tone.
+
+• End the letter with:
+
+Kind regards,
+
+Mohammad Bora
+
+Do NOT output Markdown.
+
+Do NOT explain your reasoning.
+
+Return ONLY the finished cover letter.
+
+------------------------------------
+
+Candidate CV
+
 {cv_text}
 
-Job Description:
+------------------------------------
+
+Job Description
+
 {job_description}
 """

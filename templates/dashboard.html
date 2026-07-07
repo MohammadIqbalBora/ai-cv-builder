@@ -86,10 +86,11 @@
       <div class="preview-content">
         <div class="preview-left">
           <h3>Professional Summary</h3>
-          <p>
-            {{ selected_cv.professional_summary|default:"No professional summary
-            added yet." }}
-          </p>
+          {% if selected_cv.professional_summary %}
+          <p class="preserve-lines">{{ selected_cv.professional_summary }}</p>
+          {% else %}
+          <p>No professional summary added yet.</p>
+          {% endif %}>
 
           <h3>Experience</h3>
           <p class="preserve-lines">

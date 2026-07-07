@@ -42,8 +42,7 @@
   <main class="dashboard-main">
     <div class="dashboard-header">
       <div>
-        <h1>Welcome back, {{ user.first_name|default:user.username }} 👋</h1>
-        <p>Create, manage and improve your professional CVs with AI.</p>
+        <h1>My Dashboard</h1>
 
         {% if is_premium %}
         <span class="badge bg-success">Current Plan: {{ plan_name }}</span>
@@ -51,10 +50,6 @@
         <span class="badge bg-secondary">Current Plan: Free</span>
         {% endif %}
       </div>
-
-      <a href="{% url 'create_cv' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Create New CV
-      </a>
     </div>
 
     <div class="dashboard-stats">
@@ -64,8 +59,8 @@
       </div>
 
       <div class="mini-stat">
-        <h2>{{ ai_improvements_used }}</h2>
-        <p>AI Improvements</p>
+        <h2>{{ total_cvs }}</h2>
+        <p>Job Matches</p>
       </div>
 
       <div class="mini-stat">
@@ -115,70 +110,66 @@
         </div>
       </div>
 
-      {% if selected_cv.uploaded_file %}
-      <div class="mt-4">
+      <div class="dashboard-toolbar">
+        {% if selected_cv.uploaded_file %}
         <a
           href="{{ selected_cv.uploaded_file.url }}"
           target="_blank"
-          class="btn btn-outline-dark"
+          class="btn btn-outline-dark btn-sm"
         >
           <i class="bi bi-paperclip"></i> View Uploaded CV
         </a>
-      </div>
-      {% endif %}
-
-      <div class="dashboard-toolbar">
+        {% endif %}
         <a
           href="{% url 'edit_cv' selected_cv.id %}"
-          class="btn btn-outline-primary"
+          class="btn btn-outline-primary btn-sm"
         >
           <i class="bi bi-pencil-fill"></i> Edit
         </a>
 
         <a
-          href="{% url 'improve_cv_ai' selected_cv.id %}"
-          class="btn btn-warning"
+          href="{% url 'job_match' selected_cv.id %}"
+          class="btn btn-primary btn-sm"
         >
-          <i class="bi bi-robot"></i> AI Improve
+          <i class="bi bi-bullseye"></i> Job Match
         </a>
 
         <a
           href="{% url 'create_cover_letter' selected_cv.id %}"
-          class="btn btn-info"
+          class="btn btn-info btn-sm"
         >
           <i class="bi bi-envelope-fill"></i> Cover Letter
         </a>
 
         <a
           href="{% url 'select_pdf_template' selected_cv.id %}"
-          class="btn btn-success"
+          class="btn btn-success btn-sm"
         >
           <i class="bi bi-file-earmark-pdf-fill"></i> PDF
         </a>
 
         <a
           href="{% url 'delete_cv' selected_cv.id %}"
-          class="btn btn-outline-danger"
+          class="btn btn-outline-danger btn-sm"
         >
           <i class="bi bi-trash-fill"></i> Delete
         </a>
-        <a href="{% url 'job_match' selected_cv.id %}" class="btn btn-primary">
-          <i class="bi bi-bullseye"></i> Job Match
+      </div>
+
+      {% else %}
+
+      <div class="card shadow p-5 text-center">
+        <h2>No CVs Yet</h2>
+        <p class="text-muted fs-4">
+          Create your first professional AI-powered CV.
+        </p>
+
+        <a href="{% url 'create_cv' %}" class="btn btn-primary btn-lg">
+          Create Your First CV
         </a>
       </div>
+
+      {% endif %} {% endblock %}
     </section>
   </main>
 </div>
-
-{% else %}
-
-<div class="card shadow p-5 text-center">
-  <h2>No CVs Yet</h2>
-  <p class="text-muted fs-4">Create your first professional AI-powered CV.</p>
-
-  <a href="{% url 'create_cv' %}" class="btn btn-primary btn-lg">
-    Create Your First CV
-  </a>
-</div>
-
-{% endif %} {% endblock %}

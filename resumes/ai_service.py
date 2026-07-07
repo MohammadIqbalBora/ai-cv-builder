@@ -222,19 +222,28 @@ CV TEXT:
 
         return json.loads(response.choices[0].message.content)
 
-    def analyse_job_description(self, job_description):
+    def analyse_job_description(self, cv_text, job_description):
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             response_format={"type": "json_object"},
             messages=[
                 {
                     "role": "system",
-                    "content": "You analyse job descriptions and return valid JSON only.",
+                    "content": (
+                        "You are an expert CV and recruitment assistant. "
+                        "Compare the candidate's CV with the job description and return valid JSON only."
+                    ),
                 },
                 {
                     "role": "user",
                     "content": f"""
-Analyse this job description.
+Candidate CV:
+
+{cv_text}
+
+Job Description:
+
+{job_description}
 
 Return JSON only with these exact keys:
 
@@ -244,18 +253,18 @@ responsibilities
 keywords
 experience_level
 qualifications
+match_score
+matched_skills
+missing_skills
+improvement_suggestions
 
 Rules:
+- Return valid JSON only.
 - Every value must be plain text.
-- Do not return lists or dictionaries.
-- Put each skill on a new line.
-- Put each responsibility on a new line.
-- Put each keyword on a new line.
-- If something is not found, return an empty string.
-
-Job description:
-
-{job_description}
+- Do not return arrays or nested objects.
+- Put each item on a new line.
+- match_score should be a number from 0 to 100.
+- improvement_suggestions should contain practical advice for improving the CV for this role.
 """,
                 },
             ],

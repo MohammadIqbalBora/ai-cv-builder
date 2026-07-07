@@ -416,7 +416,19 @@ def job_match(request, id):
 
         if job_description:
             ai = AIService()
-            analysis = ai.analyse_job_description(job_description)
+            cv_text = f"""
+Name: {cv.full_name}
+Job Title: {cv.job_title}
+Email: {cv.email}
+Phone: {cv.phone}
+Address: {cv.address}
+Professional Summary: {cv.professional_summary}
+Skills: {cv.skills}
+Experience: {cv.experience}
+Education: {cv.education}
+"""
+
+            analysis = ai.analyse_job_description(cv_text, job_description)
 
             return render(
                 request,

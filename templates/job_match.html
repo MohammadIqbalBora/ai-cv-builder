@@ -1,11 +1,13 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
 
-<div class="cv-form-page screen-page">
+{% block content %}
+
+<div class="job-match-page screen-page">
   <div class="form-header">
     <div>
       <span class="badge bg-primary">AI Job Matching</span>
-      <h1>Match Your CV to a Job</h1>
-      <p>Paste a job description or upload a PDF/Word job description.</p>
+      <h5>Job Match Analysis</h5>
+      <p>Compare your CV with a job description and get AI-powered insights.</p>
     </div>
 
     <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
@@ -13,112 +15,155 @@
     </a>
   </div>
 
-  <form method="POST" enctype="multipart/form-data" class="card form-section">
-    {% csrf_token %} {% if message %}
-    <div class="alert alert-success m-3">
-      <i class="bi bi-check-circle-fill"></i>
-      {{ message }}
-    </div>
-    {% endif %}
+  {% if message %}
+  <div class="alert alert-success">
+    <i class="bi bi-check-circle-fill"></i>
+    {{ message }}
+  </div>
+  {% endif %}
 
-    <div class="card-body">
-      <h3>
-        <i class="bi bi-bullseye text-primary"></i>
-        Job Description
-      </h3>
-
-      <p class="text-muted small">
-        Paste the job advert below or upload a PDF or Word document.
-      </p>
-
-      <div class="mb-4">
-        <label class="form-label">Paste Job Description</label>
-
-        <textarea
-          name="job_description"
-          rows="12"
-          class="form-control"
-          placeholder="Paste the job description here..."
-        >
-{{ job_description }}</textarea
-        >
-      </div>
-
-      <div class="mb-4">
-        <label class="form-label">Upload Job Description File</label>
-
-        <input
-          type="file"
-          name="job_file"
-          class="form-control"
-          accept=".pdf,.doc,.docx"
-        />
-      </div>
-
-      <button type="submit" class="btn btn-primary" id="analyseJobBtn">
-        <i class="bi bi-search"></i>
-        <span class="btn-text">Analyse Job Description</span>
-      </button>
-
-      <p id="jobAnalyseStatus" class="text-muted small mt-2 d-none">
-        <i class="bi bi-hourglass-split"></i>
-        Please wait while AI analyses the job description...
-      </p>
-    </div>
-  </form>
-
-  {% if analysis %}
-
-  <div class="card form-section mt-4">
-    <div class="card-body">
-      <h2>
-        <i class="bi bi-robot text-primary"></i>
-        AI Job Analysis
-      </h2>
-
-      <hr />
-
-      <h5>Job Title</h5>
-      <p class="preserve-lines">{{ analysis.job_title }}</p>
-
-      <h5>Required Skills</h5>
-      <p class="preserve-lines">{{ analysis.required_skills }}</p>
-
-      <h5>Responsibilities</h5>
-      <p class="preserve-lines">{{ analysis.responsibilities }}</p>
-
-      <h5>Keywords</h5>
-      <p class="preserve-lines">{{ analysis.keywords }}</p>
-
-      <h5>Experience Level</h5>
-      <p class="preserve-lines">{{ analysis.experience_level }}</p>
-
-      <h5>Qualifications</h5>
-      <p class="preserve-lines">{{ analysis.qualifications }}</p>
-    </div>
-    <form
-      method="POST"
-      action="{% url 'tailor_cv_to_job' cv.id %}"
-      class="mt-4"
-    >
+  <div class="job-match-top-grid">
+    <form method="POST" enctype="multipart/form-data" class="card form-section">
       {% csrf_token %}
 
-      <textarea name="job_description" class="d-none">
-{{ job_description }}</textarea
-      >
+      <div class="card-body">
+        <h3>
+          <i class="bi bi-file-earmark-text text-primary"></i>
+          Job Description
+        </h3>
 
-      <button type="submit" class="btn btn-success" id="tailorCvBtn">
-        <i class="bi bi-magic"></i>
-        <span class="btn-text">Tailor My CV</span>
-      </button>
+        <p class="text-muted small">
+          Paste the job advert below or upload a PDF or Word document.
+        </p>
 
-      <p id="tailorCvStatus" class="text-muted small mt-2 d-none">
-        <i class="bi bi-hourglass-split"></i>
-        Please wait while AI tailors your CV to this job description...
-      </p>
+        <div class="mb-3">
+          <label class="form-label">Paste Job Description</label>
+          <textarea
+            name="job_description"
+            rows="8"
+            class="form-control job-scroll-box"
+            placeholder="Paste the job description here..."
+          >{{ job_description }}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Upload Job Description File</label>
+          <input
+            type="file"
+            name="job_file"
+            class="form-control"
+            accept=".pdf,.doc,.docx"
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" id="analyseJobBtn">
+          <i class="bi bi-search"></i>
+          <span class="btn-text">Analyse Job Description</span>
+        </button>
+
+        <p id="jobAnalyseStatus" class="text-muted small mt-2 d-none">
+          <i class="bi bi-hourglass-split"></i>
+          Please wait while AI analyses the job description...
+        </p>
+      </div>
     </form>
+
+    {% if analysis %}
+    <div class="card form-section">
+      <div class="card-body">
+        <h3>
+          <i class="bi bi-robot text-success"></i>
+          AI Job Analysis
+        </h3>
+
+        <p class="text-muted small">
+          AI extracted the key information from the job description.
+        </p>
+
+        <div class="job-scroll-box">
+          <h5>Job Title</h5>
+          <p class="preserve-lines">{{ analysis.job_title }}</p>
+
+          <h5>Required Skills</h5>
+          <p class="preserve-lines">{{ analysis.required_skills }}</p>
+
+          <h5>Responsibilities</h5>
+          <p class="preserve-lines">{{ analysis.responsibilities }}</p>
+
+          <h5>Keywords</h5>
+          <p class="preserve-lines">{{ analysis.keywords }}</p>
+
+          <h5>Experience Level</h5>
+          <p class="preserve-lines">{{ analysis.experience_level }}</p>
+
+          <h5>Qualifications</h5>
+          <p class="preserve-lines">{{ analysis.qualifications }}</p>
+        </div>
+
+        <form method="POST" action="{% url 'tailor_cv_to_job' cv.id %}" class="mt-3">
+          {% csrf_token %}
+          <textarea name="job_description" class="d-none">{{ job_description }}</textarea>
+
+          <button type="submit" class="btn btn-success w-100" id="tailorCvBtn">
+            <i class="bi bi-magic"></i>
+            <span class="btn-text">Tailor My CV</span>
+          </button>
+
+          <p id="tailorCvStatus" class="text-muted small mt-2 d-none">
+            <i class="bi bi-hourglass-split"></i>
+            Please wait while AI tailors your CV to this job description...
+          </p>
+        </form>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
+  {% if analysis %}
+  <div class="card form-section mt-4">
+    <div class="card-body">
+      <h3>
+        <i class="bi bi-stars text-primary"></i>
+        AI Match Results
+      </h3>
+
+      <div class="job-match-results-grid">
+        <div class="match-result-card">
+          <h5>Match Score</h5>
+          <div class="progress mb-3" style="height: 30px;">
+            <div
+              class="progress-bar bg-success"
+              role="progressbar"
+              style="width: {{ analysis.match_score }}%;"
+            >
+              {{ analysis.match_score }}%
+            </div>
+          </div>
+        </div>
+
+        <div class="match-result-card">
+          <h5>Matched Skills</h5>
+          <div class="small-scroll-box preserve-lines">
+            {{ analysis.matched_skills }}
+          </div>
+        </div>
+
+        <div class="match-result-card">
+          <h5>Missing Skills</h5>
+          <div class="small-scroll-box preserve-lines">
+            {{ analysis.missing_skills }}
+          </div>
+        </div>
+
+        <div class="match-result-card">
+          <h5>Improvement Suggestions</h5>
+          <div class="small-scroll-box preserve-lines">
+            {{ analysis.improvement_suggestions }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   {% endif %}
 </div>
 
@@ -136,9 +181,7 @@
       }, 50);
     });
   }
-</script>
 
-<script>
   const tailorCvBtn = document.getElementById("tailorCvBtn");
   const tailorCvStatus = document.getElementById("tailorCvStatus");
 

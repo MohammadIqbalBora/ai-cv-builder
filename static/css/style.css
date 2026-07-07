@@ -1432,3 +1432,49 @@ footer {
         padding: 30px;
     }
 }
+
+.job-match-page {
+    width: 95%;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.job-match-top-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.job-match-results-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.job-scroll-box {
+    max-height: 330px;
+    overflow-y: auto;
+}
+
+.small-scroll-box {
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 12px;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.match-result-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    background: #ffffff;
+}
+
+@media (max-width: 992px) {
+    .job-match-top-grid,
+    .job-match-results-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

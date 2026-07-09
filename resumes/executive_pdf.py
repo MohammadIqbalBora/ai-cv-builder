@@ -29,7 +29,11 @@ def render_executive_pdf(cv, watermark=False):
 
     pdf.setFillColor(colors.white)
     pdf.setFont("Helvetica-Bold", 28)
-    pdf.drawString(50, height - 48, cv.full_name or "No Name")
+    pdf.drawCentredString(
+        width / 2,
+        height - 45,
+        (cv.full_name or "No Name").replace(" - Tailored CV", ""),
+    )
 
     pdf.setFont("Helvetica", 13)
     pdf.drawString(50, height - 74, cv.job_title or "")

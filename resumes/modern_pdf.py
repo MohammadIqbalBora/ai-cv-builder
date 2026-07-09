@@ -197,7 +197,11 @@ def render_modern_pdf(cv, watermark=False):
 
     pdf.setFillColor(colors.HexColor("#0f172a"))
     pdf.setFont("Helvetica-Bold", 24)
-    pdf.drawString(main_x, y, cv.full_name or "No Name")
+    pdf.drawString(
+        main_x,
+        y,
+        (cv.full_name or "No Name").replace(" - Tailored CV", ""),
+    )
 
     if cv.job_title:
         y -= 24

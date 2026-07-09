@@ -110,7 +110,11 @@
           class="mt-3"
         >
           {% csrf_token %}
-          <input type="hidden" name="job_description" value="{{ job_description }}">
+          <input
+            type="hidden"
+            name="job_description"
+            value="{{ job_description }}"
+          />
 
           <button type="submit" class="btn btn-success w-100" id="tailorCvBtn">
             <i class="bi bi-magic"></i>
@@ -149,25 +153,20 @@
           </div>
         </div>
 
+        
         <div class="match-result-card">
           <h5>Matched Skills</h5>
-          <div class="small-scroll-box preserve-lines">
-            {{ analysis.matched_skills }}
-          </div>
+          <div class="small-scroll-box preserve-lines">{{ analysis.matched_skills }}</div>
         </div>
 
         <div class="match-result-card">
           <h5>Missing Skills</h5>
-          <div class="small-scroll-box preserve-lines">
-            {{ analysis.missing_skills }}
-          </div>
+          <div class="small-scroll-box preserve-lines">{{ analysis.missing_skills }}</div>
         </div>
 
         <div class="match-result-card">
           <h5>Improvement Suggestions</h5>
-          <div class="small-scroll-box preserve-lines">
-            {{ analysis.improvement_suggestions }}
-          </div>
+          <div class="small-scroll-box preserve-lines">{{ analysis.improvement_suggestions }}</div>
         </div>
       </div>
     </div>

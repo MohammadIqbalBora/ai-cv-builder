@@ -21,7 +21,11 @@ def render_classic_pdf(cv, watermark=False):
 
     pdf.setFillColor(colors.HexColor("#111827"))
     pdf.setFont("Times-Bold", 27)
-    pdf.drawCentredString(width / 2, y, cv.full_name or "No Name")
+    pdf.drawCentredString(
+    width / 2,
+    y,
+    (cv.full_name or "No Name").replace(" - Tailored CV", ""),
+    )
 
     y -= 24
     pdf.setFont("Times-Roman", 13)

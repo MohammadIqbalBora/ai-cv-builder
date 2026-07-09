@@ -280,13 +280,26 @@ Rules:
                 {
                     "role": "system",
                     "content": (
-                        "You are a professional CV writer. " "Return valid JSON only."
+                        "You are an expert UK CV writer and recruitment consultant. "
+                        "Your job is to tailor a CV honestly to a specific job description. "
+                        "Return valid JSON only."
                     ),
                 },
                 {
                     "role": "user",
                     "content": f"""
-Rewrite this CV so it is tailored to the job description.
+Tailor the candidate's CV specifically for the job description.
+
+Your task:
+1. Read the job description carefully.
+2. Identify the most important required skills, technologies, responsibilities and keywords.
+3. Read the candidate CV.
+4. Rewrite the CV so the most relevant existing experience is highlighted.
+5. Emphasise transferable skills from IT support, infrastructure, data centre and deployment work.
+6. Highlight software development training, web development skills, Agile exposure, documentation, troubleshooting and technical collaboration where truthful.
+7. Use job description keywords only where they honestly match the candidate's background.
+8. Do not invent commercial experience with technologies the candidate has only studied.
+9. Do not invent jobs, employers, dates, qualifications or achievements.
 
 Return JSON only with these exact keys:
 
@@ -296,25 +309,35 @@ skills
 experience
 education
 
-Important rules:
-- Do not invent jobs, companies, dates, qualifications, or experience.
-- Keep facts truthful.
-- Emphasise relevant existing skills and experience.
-- Keep technical keywords from the job description where they honestly match the CV.
-- Rewrite bullet points professionally.
+Rules:
+- Return valid JSON only.
 - Do not include markdown.
 - Every value must be plain text only.
 - Skills should be grouped clearly.
-- Experience should keep this format:
+- Experience must keep the original companies, job titles and dates.
+- Rewrite bullet points so they show transferable value for this job.
+- Put software development, web development and relevant technical skills higher in the skills section.
+- Keep infrastructure skills if they support the job application, but do not let them dominate the CV.
+- Education should highlight relevant software/web development courses first.
+- Keep the CV truthful and suitable for a UK job application.
+- Do not copy skills from the job description into the CV unless they clearly appear in the candidate CV.
+- If a skill only appears in the job description, treat it as a missing skill and do not add it to the tailored CV.
+- The candidate has only listed Full Stack Web Development training, so do not claim professional experience in C#, Angular, ASP.NET Core, Azure, APIs or Scrum unless those appear in the original CV.
+- You may mention these as learning goals only if appropriate, but not as existing skills or experience.
+- Do not list SQL, C#, Angular, ASP.NET Core, Azure, REST APIs, OAuth, JWT, NodeJS or cloud APIs unless they clearly appear in the candidate CV.
+- Full Stack Web Development training may support HTML, CSS and JavaScript only if they are presented as training-based skills, not commercial experience.
+- Do not assume SQL or any database technology from the phrase Full Stack Web Development.
+
+Experience format:
 
 Company Name
 Job Title
 Dates
-•  Responsibility or achievement
-•  Responsibility or achievement
-•  Responsibility or achievement
+• Responsibility or achievement
+• Responsibility or achievement
+• Responsibility or achievement
 
-CV:
+Candidate CV:
 {cv_text}
 
 Job Description:

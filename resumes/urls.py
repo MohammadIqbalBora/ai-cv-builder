@@ -1,4 +1,5 @@
 from django.urls import path
+
 from . import views
 
 urlpatterns = [
@@ -17,6 +18,11 @@ urlpatterns = [
     path(
         "cover-letter/<int:id>/", views.create_cover_letter, name="create_cover_letter"
     ),
+    path(
+        "cover-letter/<int:id>/download/",
+        views.download_cover_letter_pdf,
+        name="download_cover_letter_pdf",
+    ),
     path("pricing/", views.pricing, name="pricing"),
     path("subscribe/", views.create_checkout_session, name="subscribe"),
     path("stripe/success/", views.stripe_success, name="stripe_success"),
@@ -31,5 +37,4 @@ urlpatterns = [
     path("stripe/webhook/", views.stripe_webhook, name="stripe_webhook"),
     path("job-match/<int:id>/", views.job_match, name="job_match"),
     path("job-match/<int:id>/tailor/", views.tailor_cv_to_job, name="tailor_cv_to_job"),
-    
 ]

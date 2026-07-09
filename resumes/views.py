@@ -1,10 +1,14 @@
+from io import BytesIO
+
+import stripe
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
-
-import stripe
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from .ai_service import AIService
 from .cv_parser import extract_text_from_cv, parse_cv_text
@@ -220,9 +224,11 @@ def create_cover_letter(request, id):
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     cover_letter = None
+    job_description = request.session.get("last_job_description", "")
 
     if request.method == "POST":
-        job_description = request.POST.get("job_description")
+        if not job_description:
+            return redirect("job_match", id=cv.id)
 
         ai = AIService()
 
@@ -235,11 +241,17 @@ Experience: {cv.experience}
 """
 
         cover_letter = ai.generate_cover_letter(cv_text, job_description)
+        request.session["last_cover_letter"] = cover_letter
+        request.session["last_cover_letter_cv_id"] = cv.id
 
     return render(
         request,
         "cover_letter.html",
-        {"cv": cv, "cover_letter": cover_letter},
+        {
+            "cv": cv,
+            "cover_letter": cover_letter,
+            "job_description": job_description,
+        },
     )
 
 
@@ -262,6 +274,41 @@ def download_cv_pdf(request, id):
         return render_executive_pdf(cv)
 
     return render_modern_pdf(cv)
+
+
+@login_required
+def download_cover_letter_pdf(request, id):
+    if not user_has_active_subscription(request.user):
+        return redirect("subscribe")
+
+    cv = get_object_or_404(CV, id=id, user=request.user)
+
+    cover_letter = request.session.get("last_cover_letter")
+
+    if not cover_letter:
+        return redirect("create_cover_letter", id=cv.id)
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph("Cover Letter", styles["Title"]))
+    story.append(Spacer(1, 20))
+
+    for line in cover_letter.split("\n"):
+        if line.strip():
+            story.append(Paragraph(line.strip(), styles["Normal"]))
+            story.append(Spacer(1, 8))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="cover_letter.pdf"'
+
+    return response
 
 
 @login_required
@@ -398,7 +445,9 @@ def select_pdf_template(request, id):
 @login_required
 def job_match(request, id):
     cv = get_object_or_404(CV, id=id, user=request.user)
+
     analysis = None
+    job_description = ""
 
     if request.method == "POST":
         job_description = request.POST.get("job_description", "").strip()
@@ -415,7 +464,11 @@ def job_match(request, id):
             temp_cv.delete()
 
         if job_description:
+            request.session["last_job_description"] = job_description
+            request.session["last_job_cv_id"] = cv.id
+
             ai = AIService()
+
             cv_text = f"""
 Name: {cv.full_name}
 Job Title: {cv.job_title}
@@ -429,6 +482,8 @@ Education: {cv.education}
 """
 
             analysis = ai.analyse_job_description(cv_text, job_description)
+
+            request.session["last_job_analysis"] = analysis
 
             return render(
                 request,
@@ -450,7 +505,15 @@ Education: {cv.education}
             },
         )
 
-    return render(request, "job_match.html", {"cv": cv})
+    return render(
+        request,
+        "job_match.html",
+        {
+            "cv": cv,
+            "analysis": analysis,
+            "job_description": job_description,
+        },
+    )
 
 
 @login_required
@@ -477,9 +540,11 @@ Education: {cv.education}
         ai = AIService()
         tailored_data = ai.tailor_cv_to_job(cv_text, job_description)
 
+        base_name = cv.full_name.split(" - Tailored CV")[0]
+
         tailored_cv = CV.objects.create(
             user=request.user,
-            full_name=cv.full_name,
+            full_name=f"{base_name} - Tailored CV",
             email=cv.email,
             phone=cv.phone,
             address=cv.address,
@@ -492,6 +557,6 @@ Education: {cv.education}
             template=cv.template,
         )
 
-        return redirect("edit_cv", id=tailored_cv.id)
+        return redirect("dashboard")
 
     return redirect("job_match", id=cv.id)

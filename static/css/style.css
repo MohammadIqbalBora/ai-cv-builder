@@ -1479,3 +1479,26 @@ footer {
 }
 
 
+.tailored-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    margin-top: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #10b981;
+    color: #ffffff !important;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.tailored-badge i {
+    color: #ffffff;
+    font-size: 12px;
+}
+
+.sidebar-job-title {
+    margin-top: 4px;
+}

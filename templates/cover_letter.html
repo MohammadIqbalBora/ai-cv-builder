@@ -1,15 +1,13 @@
-{% extends 'base.html' %}
-
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 
 <div class="cover-page">
   <div class="cover-header mb-5">
     <div>
       <span class="badge bg-primary mb-3">AI Cover Letter</span>
-      <h1>Cover Letter Generator</h1>
+      <h1>Generate AI Cover Letter</h1>
       <p>
-        Paste a job description and generate a tailored cover letter using your
-        saved CV.
+        Generate a tailored cover letter using the selected CV and the job
+        description analysed in Job Match.
       </p>
     </div>
 
@@ -20,44 +18,36 @@
 
   <div class="card result-card">
     <div class="card-body">
-      <h3>
-        <i class="bi bi-briefcase-fill text-primary"></i>
-        Job Description
-      </h3>
-
-      <p class="text-muted small mb-3">
-        Paste the job advert below. The AI will tailor the cover letter for
-        <strong>{{ cv.full_name }}</strong>.
-      </p>
-
-      <form method="POST">
+      <form method="POST" id="coverLetterForm">
         {% csrf_token %}
 
-        <div class="mb-4">
-          <label>Paste Job Description</label>
-          <textarea
-            name="job_description"
-            rows="6"
-            class="form-control"
-            placeholder="Paste the full job description here..."
-          >{{ job_description }}</textarea>
+        <div class="alert alert-info mb-4">
+          <i class="bi bi-check-circle-fill"></i>
+
+          <strong>Ready to Generate</strong>
+
+          <p class="mb-0 mt-2">
+            Using:
+            <br />
+            • <strong>Selected CV:</strong> {{ cv.full_name|cut:" - Tailored CV" }}
+            <br />
+            • <strong>Job Description:</strong> Last analysed in
+            <strong>Job Match</strong>.
+          </p>
         </div>
 
-        <button type="submit" class="btn btn-success w-100">
-          <i class="bi bi-magic"></i> Generate Cover Letter
+        <button type="submit" class="btn btn-success w-100" id="coverLetterBtn">
+          <i class="bi bi-magic"></i>
+          <span class="btn-text">Generate Cover Letter</span>
         </button>
+
+        <p id="coverLetterStatus" class="text-muted small mt-2 d-none">
+          <i class="bi bi-hourglass-split"></i>
+          Please wait while AI generates your personalised cover letter...
+        </p>
       </form>
 
-      <hr class="my-4">
-
-      <h3>
-        <i class="bi bi-envelope-paper-fill text-primary"></i>
-        Generated Cover Letter
-      </h3>
-
-      <p class="text-muted small mb-3">
-        Review the AI-generated letter and copy it into your application.
-      </p>
+      <hr class="my-4" />
 
       {% if cover_letter %}
       <div class="letter-output">
@@ -75,9 +65,15 @@
       {% endif %}
 
       <div class="cover-actions mt-4">
-        <a href="{% url 'edit_cv' cv.id %}" class="btn btn-outline-primary">
-          <i class="bi bi-pencil-fill"></i> Edit CV
+        {% if cover_letter %}
+        <a
+          href="{% url 'download_cover_letter_pdf' cv.id %}"
+          class="btn btn-success"
+        >
+          <i class="bi bi-file-earmark-pdf-fill"></i>
+          Download Cover Letter PDF
         </a>
+        {% endif %}
 
         <a href="{% url 'dashboard' %}" class="btn btn-primary">
           <i class="bi bi-check-circle-fill"></i> Done
@@ -86,5 +82,20 @@
     </div>
   </div>
 </div>
+
+<script>
+  const coverLetterForm = document.getElementById("coverLetterForm");
+  const coverLetterBtn = document.getElementById("coverLetterBtn");
+  const coverLetterStatus = document.getElementById("coverLetterStatus");
+
+  if (coverLetterForm && coverLetterBtn && coverLetterStatus) {
+    coverLetterForm.addEventListener("submit", function () {
+      coverLetterStatus.classList.remove("d-none");
+      coverLetterBtn.disabled = true;
+      coverLetterBtn.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-2"></span> Generating Cover Letter...';
+    });
+  }
+</script>
 
 {% endblock %}

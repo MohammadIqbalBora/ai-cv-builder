@@ -19,10 +19,17 @@
           <i class="bi bi-file-earmark-text"></i>
         </div>
         <div>
-          <strong>{{ cv.full_name|truncatechars:22 }}</strong>
-          <span
-            >{{ cv.job_title|default:"No title added"|truncatechars:24 }}</span
-          >
+          <strong>{{ cv.full_name|truncatechars:24 }}</strong>
+
+          {% if "Tailored CV" in cv.full_name %}
+          <span class="tailored-badge">
+            <i class="bi bi-stars"></i> AI Tailored
+          </span>
+          {% endif %}
+
+          <span class="sidebar-job-title">
+            {{ cv.job_title|default:"No title added"|truncatechars:24 }}
+          </span>
         </div>
       </a>
       {% endfor %}
@@ -52,22 +59,7 @@
       </div>
     </div>
 
-    <div class="dashboard-stats">
-      <div class="mini-stat">
-        <h2>{{ total_cvs }}</h2>
-        <p>Total CVs</p>
-      </div>
-
-      <div class="mini-stat">
-        <h2>{{ total_cvs }}</h2>
-        <p>Job Matches</p>
-      </div>
-
-      <div class="mini-stat">
-        <h2>{{ cover_letters_generated }}</h2>
-        <p>Cover Letters</p>
-      </div>
-    </div>
+    
 
     <section class="dashboard-preview-card">
       <div class="preview-top">
@@ -146,7 +138,7 @@
           href="{% url 'select_pdf_template' selected_cv.id %}"
           class="btn btn-success btn-sm"
         >
-          <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+          <i class="bi bi-file-earmark-pdf-fill"></i> Choose PDF Template
         </a>
 
         <a

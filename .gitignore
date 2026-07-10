@@ -22,3 +22,5 @@ media/
 
 # Windows
 Thumbs.db
+
+staticfiles/

@@ -12,9 +12,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------------------------------
 # SECURITY
 # --------------------------------------------------
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-default-key")
-DEBUG = True
-ALLOWED_HOSTS = []
+# SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-default-key")
+# DEBUG = True
+# ALLOWED_HOSTS = []
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-local-development-key-change-in-production",
+)
+
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1",
+    ).split(",")
+    if host.strip()
+]
 
 
 # --------------------------------------------------
@@ -37,6 +52,7 @@ INSTALLED_APPS = [
 # --------------------------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -104,12 +120,6 @@ USE_TZ = True
 
 
 # --------------------------------------------------
-# STATIC FILES
-# --------------------------------------------------
-STATIC_URL = "static/"
-
-
-# --------------------------------------------------
 # MEDIA FILES
 # --------------------------------------------------
 MEDIA_URL = "/media/"
@@ -141,8 +151,31 @@ STRIPE_PRICE_ID = os.getenv("STRIPE_PRICE_ID")
 
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
-STATIC_URL = "static/"
+
+# --------------------------------------------------
+# STATIC FILES
+# --------------------------------------------------
+
+STATIC_URL = "/static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True

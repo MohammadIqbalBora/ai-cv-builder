@@ -390,8 +390,8 @@ def stripe_webhook(request):
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
 
-            metadata = session.get("metadata") or {}
-            user_id = metadata.get("user_id")
+            metadata = getattr(session, "metadata", None)
+            user_id = getattr(metadata, "user_id", None) if metadata else None
 
             logger.info("Stripe webhook user_id: %s", user_id)
 
@@ -406,10 +406,18 @@ def stripe_webhook(request):
                         Subscription.objects.get_or_create(user=user)
                     )
 
-                    subscription.stripe_customer_id = session.get("customer")
-                    subscription.stripe_subscription_id = session.get(
-                        "subscription"
+                    subscription.stripe_customer_id = getattr(
+                        session,
+                        "customer",
+                        None,
                     )
+                    subscription.stripe_subscription_id = getattr(
+                        session,
+                        "subscription",
+                        None,
+                )
+
+
                     subscription.is_active = True
                     subscription.plan_name = "Premium"
                     subscription.save()

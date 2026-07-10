@@ -1,3 +1,4 @@
+import logging
 from io import BytesIO
 
 import stripe
@@ -20,6 +21,8 @@ from .pdf_templates import (
     render_executive_pdf,
     render_modern_pdf,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -383,24 +386,44 @@ def stripe_webhook(request):
         print("Webhook verification error:", e)
         return HttpResponse(status=400)
 
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
+    try:
+        if event["type"] == "checkout.session.completed":
+            session = event["data"]["object"]
 
-        metadata = session.get("metadata") or {}
-        user_id = metadata.get("user_id")
+            metadata = session.get("metadata") or {}
+            user_id = metadata.get("user_id")
 
-        if user_id:
-            User = get_user_model()
-            user = User.objects.filter(id=user_id).first()
+            logger.info("Stripe webhook user_id: %s", user_id)
 
-            if user:
-                subscription, _created = Subscription.objects.get_or_create(user=user)
+            if user_id:
+                User = get_user_model()
+                user = User.objects.filter(id=user_id).first()
 
-                subscription.stripe_customer_id = session.get("customer")
-                subscription.stripe_subscription_id = session.get("subscription")
-                subscription.is_active = True
-                subscription.plan_name = "Premium"
-                subscription.save()
+                logger.info("Matching Django user found: %s", bool(user))
+
+                if user:
+                    subscription, _created = (
+                        Subscription.objects.get_or_create(user=user)
+                    )
+
+                    subscription.stripe_customer_id = session.get("customer")
+                    subscription.stripe_subscription_id = session.get(
+                        "subscription"
+                    )
+                    subscription.is_active = True
+                    subscription.plan_name = "Premium"
+                    subscription.save()
+
+                    logger.info(
+                        "Subscription activated for user ID %s",
+                        user_id,
+                    )
+
+    except Exception:
+        logger.exception("Stripe webhook processing failed")
+        return HttpResponse(status=500)
+
+    return HttpResponse(status=200)
 
     return HttpResponse(status=200)
 

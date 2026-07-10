@@ -2,6 +2,7 @@ from io import BytesIO
 
 import stripe
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -389,15 +390,17 @@ def stripe_webhook(request):
         user_id = metadata.get("user_id")
 
         if user_id:
-            subscription, _created = Subscription.objects.get_or_create(
-                user_id=user_id
-            )
+            User = get_user_model()
+            user = User.objects.filter(id=user_id).first()
 
-            subscription.stripe_customer_id = session.get("customer")
-            subscription.stripe_subscription_id = session.get("subscription")
-            subscription.is_active = True
-            subscription.plan_name = "Premium"
-            subscription.save()
+            if user:
+                subscription, _created = Subscription.objects.get_or_create(user=user)
+
+                subscription.stripe_customer_id = session.get("customer")
+                subscription.stripe_subscription_id = session.get("subscription")
+                subscription.is_active = True
+                subscription.plan_name = "Premium"
+                subscription.save()
 
     return HttpResponse(status=200)
 

@@ -1,8 +1,10 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class CV(models.Model):
+    """Stores a user's CV and the selected PDF template."""
+
     TEMPLATE_CHOICES = [
         ("modern", "Modern"),
         ("classic", "Classic"),
@@ -39,6 +41,8 @@ class CV(models.Model):
 
 
 class Subscription(models.Model):
+    """Stores Stripe subscription state for a user."""
+
     PLAN_CHOICES = [
         ("Free", "Free"),
         ("Premium", "Premium"),

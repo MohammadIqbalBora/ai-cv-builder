@@ -1,3 +1,5 @@
+"""Classic CV PDF rendering utilities."""
+
 from django.http import HttpResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -7,6 +9,7 @@ from .pdf_helpers import draw_bullets, draw_footer, draw_section
 
 
 def render_classic_pdf(cv, watermark=False):
+    """Render a classic-style CV layout as a PDF response."""
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
         f'attachment; filename="{cv.full_name}_Classic_CV.pdf"'
@@ -22,9 +25,9 @@ def render_classic_pdf(cv, watermark=False):
     pdf.setFillColor(colors.HexColor("#111827"))
     pdf.setFont("Times-Bold", 27)
     pdf.drawCentredString(
-    width / 2,
-    y,
-    (cv.full_name or "No Name").replace(" - Tailored CV", ""),
+        width / 2,
+        y,
+        (cv.full_name or "No Name").replace(" - Tailored CV", ""),
     )
 
     y -= 24

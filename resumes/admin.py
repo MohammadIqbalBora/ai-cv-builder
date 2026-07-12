@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import CV, Subscription
 
 admin.site.site_header = "AI CV Builder Administration"

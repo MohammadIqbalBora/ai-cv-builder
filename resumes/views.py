@@ -26,11 +26,13 @@ logger = logging.getLogger(__name__)
 
 
 def home(request):
+    """Render the public homepage."""
     return render(request, "home.html")
 
 
 @login_required
 def dashboard(request):
+    """Render the user's dashboard with their CV list and subscription status."""
     cvs = CV.objects.filter(user=request.user).order_by("-created_at")
 
     selected_cv = None
@@ -69,6 +71,7 @@ def dashboard(request):
 
 
 def import_data_into_cv(cv, parsed_data):
+    """Copy parsed CV values into the CV model and save it."""
     cv.full_name = parsed_data.get("full_name") or cv.full_name
     cv.job_title = parsed_data.get("job_title") or cv.job_title
     cv.email = parsed_data.get("email") or cv.email
@@ -87,6 +90,7 @@ def import_data_into_cv(cv, parsed_data):
 
 
 def parse_cv_with_ai_or_fallback(extracted_text):
+    """Attempt AI parsing first, then fall back to a basic parser on error."""
     try:
         ai = AIService()
         return ai.parse_uploaded_cv(extracted_text)
@@ -97,6 +101,7 @@ def parse_cv_with_ai_or_fallback(extracted_text):
 
 @login_required
 def create_cv(request):
+    """Create a new CV record or import an uploaded CV file via AI parsing."""
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -140,6 +145,7 @@ def create_cv(request):
 
 @login_required
 def edit_cv(request, id):
+    """Edit an existing CV and show which fields are still missing."""
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     missing_fields = []
@@ -194,11 +200,13 @@ def delete_cv(request, id):
 
 
 def user_has_active_subscription(user):
+    """Return True when the user has an active premium subscription."""
     return Subscription.objects.filter(user=user, is_active=True).exists()
 
 
 @login_required
 def improve_cv_ai(request, id):
+    """Improve a CV using AI and show the rewritten result."""
     if not user_has_active_subscription(request.user):
         return redirect("subscribe")
 
@@ -222,6 +230,7 @@ Education: {cv.education}
 
 @login_required
 def create_cover_letter(request, id):
+    """Generate or display a cover letter for a CV based on the last job description."""
     if not user_has_active_subscription(request.user):
         return redirect("subscribe")
 
@@ -261,6 +270,7 @@ Experience: {cv.experience}
 
 @login_required
 def download_cv_pdf(request, id):
+    """Return the selected CV as a downloadable PDF based on the chosen template."""
     if not user_has_active_subscription(request.user):
         return redirect("subscribe")
 
@@ -282,6 +292,7 @@ def download_cv_pdf(request, id):
 
 @login_required
 def download_cover_letter_pdf(request, id):
+    """Render the latest generated cover letter as a downloadable PDF."""
     if not user_has_active_subscription(request.user):
         return redirect("subscribe")
 
@@ -402,8 +413,8 @@ def stripe_webhook(request):
                 logger.info("Matching Django user found: %s", bool(user))
 
                 if user:
-                    subscription, _created = (
-                        Subscription.objects.get_or_create(user=user)
+                    subscription, _created = Subscription.objects.get_or_create(
+                        user=user
                     )
 
                     subscription.stripe_customer_id = getattr(
@@ -415,8 +426,7 @@ def stripe_webhook(request):
                         session,
                         "subscription",
                         None,
-                )
-
+                    )
 
                     subscription.is_active = True
                     subscription.plan_name = "Premium"
@@ -578,7 +588,7 @@ Education: {cv.education}
 
         base_name = cv.full_name.split(" - Tailored CV")[0]
 
-        tailored_cv = CV.objects.create(
+        CV.objects.create(
             user=request.user,
             full_name=f"{base_name} - Tailored CV",
             email=cv.email,

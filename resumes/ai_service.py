@@ -1,3 +1,5 @@
+"""AI helper utilities and OpenAI-powered resume services."""
+
 import json
 import os
 
@@ -5,6 +7,7 @@ from openai import OpenAI
 
 
 def make_plain_text(value):
+    """Convert nested AI output values into a simple plain-text string."""
     if value is None:
         return ""
 
@@ -79,6 +82,7 @@ def make_plain_text(value):
 
 
 def clean_ai_cv_data(data):
+    """Normalize AI JSON output into plain text values for the CV model."""
     return {
         "job_title": make_plain_text(data.get("job_title")),
         "professional_summary": make_plain_text(data.get("professional_summary")),
@@ -89,10 +93,14 @@ def clean_ai_cv_data(data):
 
 
 class AIService:
+    """Provides OpenAI-backed CV parsing, improvement, and cover letter generation."""
+
     def __init__(self):
+        """Create an OpenAI client using the configured API key."""
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     def improve_cv(self, cv_text, template="modern"):
+        """Ask OpenAI to rewrite a CV text into a professionally improved version."""
         prompt = self._build_cv_prompt(cv_text, template)
 
         response = self.client.chat.completions.create(
@@ -112,6 +120,7 @@ class AIService:
         return response.choices[0].message.content
 
     def generate_cover_letter(self, cv_text, job_description, template="modern"):
+        """Generate a tailored cover letter from CV content and a job description."""
         prompt = self._build_cover_letter_prompt(
             cv_text,
             job_description,
@@ -135,6 +144,7 @@ class AIService:
         return response.choices[0].message.content
 
     def parse_uploaded_cv(self, extracted_text):
+        """Extract structured CV fields from raw uploaded text using the AI model."""
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             response_format={"type": "json_object"},
@@ -223,6 +233,7 @@ CV TEXT:
         return json.loads(response.choices[0].message.content)
 
     def analyse_job_description(self, cv_text, job_description):
+        """Compare the candidate CV against a job description and extract matching data."""
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             response_format={"type": "json_object"},
@@ -273,6 +284,7 @@ Rules:
         return json.loads(response.choices[0].message.content)
 
     def tailor_cv_to_job(self, cv_text, job_description):
+        """Use AI to rewrite CV fields so they are tailored to the job description."""
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             response_format={"type": "json_object"},
@@ -351,6 +363,7 @@ Job Description:
         return clean_ai_cv_data(raw_data)
 
     def suggest_template(self, job_title="", summary="", skills=""):
+        """Pick a default PDF template based on the candidate's career keywords."""
         text = f"{job_title} {summary} {skills}".lower()
 
         if any(word in text for word in ["manager", "director", "executive", "lead"]):
@@ -362,6 +375,7 @@ Job Description:
         return "classic"
 
     def _build_cv_prompt(self, cv_text, template):
+        """Create a simple prompt for AI CV improvement."""
         return f"""
 Improve this CV professionally.
 Use clear sections and bullet points.

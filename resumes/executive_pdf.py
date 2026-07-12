@@ -1,3 +1,5 @@
+"""Executive CV PDF rendering utilities."""
+
 from django.http import HttpResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -7,6 +9,7 @@ from .pdf_helpers import draw_bullets, draw_footer, draw_section
 
 
 def render_executive_pdf(cv, watermark=False):
+    """Render the executive-style CV template as a PDF response."""
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
         f'attachment; filename="{cv.full_name}_Executive_CV.pdf"'

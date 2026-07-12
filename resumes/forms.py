@@ -1,8 +1,11 @@
 from django import forms
+
 from .models import CV
 
 
 class CVForm(forms.ModelForm):
+    """Form for creating and editing CV records."""
+
     class Meta:
         model = CV
         fields = [
@@ -22,7 +25,7 @@ class CVForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Only Full Name is required
+        # Require only the candidate name while allowing partial CV values.
         self.fields["full_name"].required = True
 
         optional_fields = [
@@ -40,4 +43,3 @@ class CVForm(forms.ModelForm):
 
         for field in optional_fields:
             self.fields[field].required = False
-            

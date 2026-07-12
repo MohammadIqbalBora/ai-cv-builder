@@ -1,3 +1,5 @@
+"""Modern CV PDF rendering utilities."""
+
 from django.http import HttpResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -7,6 +9,7 @@ from .pdf_helpers import draw_footer, draw_section, draw_wrapped_text
 
 
 def draw_sidebar(pdf, cv, width, height, sidebar_width):
+    """Render the left sidebar of the modern CV template."""
     pdf.setFillColor(colors.HexColor("#0f2f57"))
     pdf.rect(0, 0, sidebar_width, height, fill=True, stroke=False)
 
@@ -62,6 +65,7 @@ def draw_sidebar(pdf, cv, width, height, sidebar_width):
 
 
 def draw_modern_experience(pdf, text, x, y, max_width, width, height):
+    """Render the experience section for the modern layout."""
     if not text:
         return y
 
@@ -178,6 +182,7 @@ def draw_modern_experience(pdf, text, x, y, max_width, width, height):
 
 
 def render_modern_pdf(cv, watermark=False):
+    """Render the modern CV design into a PDF response."""
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
         f'attachment; filename="{cv.full_name}_Modern_CV.pdf"'

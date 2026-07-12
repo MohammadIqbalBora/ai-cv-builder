@@ -6,6 +6,7 @@ from pypdf import PdfReader
 
 
 def extract_text_from_pdf(file_path):
+    """Read all text from a PDF file and return it as a single string."""
     text = ""
 
     reader = PdfReader(file_path)
@@ -19,6 +20,7 @@ def extract_text_from_pdf(file_path):
 
 
 def extract_text_from_docx(file_path):
+    """Read all text from a DOCX file and return it as one string."""
     document = Document(file_path)
 
     text = []
@@ -30,6 +32,7 @@ def extract_text_from_docx(file_path):
 
 
 def extract_text_from_cv(file_path):
+    """Choose the correct extractor based on the uploaded CV extension."""
     file_extension = Path(file_path).suffix.lower()
 
     if file_extension == ".pdf":
@@ -42,21 +45,25 @@ def extract_text_from_cv(file_path):
 
 
 def extract_email(text):
+    """Find the first email address in raw CV text."""
     match = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", text)
     return match.group(0) if match else ""
 
 
 def extract_phone(text):
+    """Find the first phone number-like string in raw CV text."""
     match = re.search(r"(\+?\d[\d\s]{8,}\d)", text)
     return match.group(0).strip() if match else ""
 
 
 def extract_name(text):
+    """Return the first non-empty line as the candidate name."""
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return lines[0] if lines else ""
 
 
 def extract_section(text, start_keywords, end_keywords):
+    """Capture a section of text between known start and end markers."""
     lines = text.splitlines()
     capture = False
     section_lines = []
@@ -79,6 +86,7 @@ def extract_section(text, start_keywords, end_keywords):
 
 
 def parse_cv_text(text):
+    """Parse raw CV text into a simple structured dictionary."""
     return {
         "full_name": extract_name(text),
         "email": extract_email(text),

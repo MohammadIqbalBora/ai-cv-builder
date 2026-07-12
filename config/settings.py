@@ -4,6 +4,7 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
+# Load values from a .env file into environment variables during local development.
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,16 +13,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------------------------------
 # SECURITY
 # --------------------------------------------------
-# SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-default-key")
-# DEBUG = True
-# ALLOWED_HOSTS = []
+# Use an environment variable for the secret key so it does not live in code.
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
     "django-insecure-local-development-key-change-in-production",
 )
 
+# DEBUG should be False in production. Defaults to True locally.
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
+# A list of allowed hosts for production deployment.
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv(
@@ -33,7 +34,7 @@ ALLOWED_HOSTS = [
 
 
 # --------------------------------------------------
-# APPS
+# INSTALLED APPS
 # --------------------------------------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -66,7 +67,7 @@ ROOT_URLCONF = "config.urls"
 
 
 # --------------------------------------------------
-# TEMPLATES
+# TEMPLATE SETTINGS
 # --------------------------------------------------
 TEMPLATES = [
     {
@@ -84,11 +85,12 @@ TEMPLATES = [
 ]
 
 
+# WSGI application for serving the project.
 WSGI_APPLICATION = "config.wsgi.application"
 
 
 # --------------------------------------------------
-# DATABASE (CLEAN - USES ENV)
+# DATABASE
 # --------------------------------------------------
 DATABASES = {
     "default": dj_database_url.config(
@@ -98,7 +100,7 @@ DATABASES = {
 
 
 # --------------------------------------------------
-# PASSWORD VALIDATION
+# PASSWORD VALIDATORS
 # --------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -127,42 +129,35 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 # --------------------------------------------------
-# DEFAULT PK FIELD
+# DEFAULT PRIMARY KEY FIELD TYPE
 # --------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # --------------------------------------------------
-# AUTH SETTINGS
+# AUTH REDIRECTS
 # --------------------------------------------------
 LOGIN_REDIRECT_URL = "/"
-# LOGOUT_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 
 # --------------------------------------------------
-# ENV VARIABLES (AI + STRIPE)
+# EXTERNAL SERVICE KEYS
 # --------------------------------------------------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
 STRIPE_PRICE_ID = os.getenv("STRIPE_PRICE_ID")
-
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 
 # --------------------------------------------------
 # STATIC FILES
 # --------------------------------------------------
-
 STATIC_URL = "/static/"
-
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 STORAGES = {
     "default": {
@@ -174,6 +169,7 @@ STORAGES = {
 }
 
 
+# Security settings used in production only.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True

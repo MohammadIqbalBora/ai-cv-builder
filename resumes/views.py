@@ -116,7 +116,7 @@ def create_cv(request):
 
             cv = CV.objects.create(
                 user=request.user,
-                full_name="Imported CV",
+                full_name="",
                 uploaded_file=uploaded_file,
                 template=request.POST.get("template", "modern"),
             )

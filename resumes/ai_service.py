@@ -420,7 +420,7 @@ Dear Hiring Manager,
 
 Kind regards,
 
-Mohammad Bora
+Use the candidate's full name from the Candidate CV section.
 
 Do NOT output Markdown.
 

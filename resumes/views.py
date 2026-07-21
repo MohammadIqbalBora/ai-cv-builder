@@ -22,7 +22,6 @@ from django.http import HttpResponse
 
 # Load owned objects safely, redirect by route name, and render templates.
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.clickjacking import xframe_options_exempt
 
 # Stripe cannot send a browser CSRF token, so its signed endpoint is exempt.
 from django.views.decorators.csrf import csrf_exempt
@@ -45,7 +44,6 @@ from .pdf_templates import (
 logger = logging.getLogger(__name__)
 
 
-@xframe_options_exempt
 def home(request):
     """Render the public homepage."""
     return render(request, "home.html")

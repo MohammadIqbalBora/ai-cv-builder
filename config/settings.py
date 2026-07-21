@@ -2,11 +2,13 @@
 
 # Read secrets and deployment options from environment variables.
 import os
+
 # Build operating-system-independent paths such as BASE_DIR / "templates".
 from pathlib import Path
 
 # Convert a DATABASE_URL string into Django's DATABASES dictionary format.
 import dj_database_url
+
 # Load local development variables from a .env file when one exists.
 from dotenv import load_dotenv
 
@@ -90,7 +92,7 @@ MIDDLEWARE = [
     # Makes Django's one-time message system available to views/templates.
     "django.contrib.messages.middleware.MessageMiddleware",
     # Prevents other sites from embedding these pages in a frame.
-    # "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 
@@ -138,7 +140,9 @@ DATABASES = {
     "default": dj_database_url.config(
         # Read the database provider, credentials, and location from deployment.
         # Reuse a connection for ten minutes and require encrypted transport.
-        default=os.getenv("DATABASE_URL"), conn_max_age=600, ssl_require=True
+        default=os.getenv("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True,
     )
 }
 
@@ -241,5 +245,3 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     # Send the CSRF protection cookie only over HTTPS as well.
     CSRF_COOKIE_SECURE = True
-
-

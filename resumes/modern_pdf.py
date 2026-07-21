@@ -1,3 +1,5 @@
+# This file helps build or display printable PDF versions of a CV.
+
 """Modern CV PDF rendering utilities."""
 
 from django.http import HttpResponse

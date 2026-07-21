@@ -1,19 +1,26 @@
+# This module coordinates AI-powered CV and cover-letter features.
+
 """AI helper utilities and OpenAI-powered resume services."""
 
+# Parse JSON response strings and read credentials from the environment.
 import json
 import os
 
+# The official client sends model requests and returns response objects.
 from openai import OpenAI
 
 
 def make_plain_text(value):
     """Convert nested AI output values into a simple plain-text string."""
+    # Represent missing data as an empty model field.
     if value is None:
         return ""
 
+    # Plain strings need only surrounding whitespace removed.
     if isinstance(value, str):
         return value.strip()
 
+    # Recursively flatten list items into newline-separated text.
     if isinstance(value, list):
         lines = []
 
@@ -25,9 +32,11 @@ def make_plain_text(value):
 
         return "\n".join(lines)
 
+    # Dictionaries may represent a structured employment entry.
     if isinstance(value, dict):
         lines = []
 
+        # Accept common alternative spellings the model may return.
         company = (
             value.get("Company Name")
             or value.get("company_name")
@@ -70,6 +79,7 @@ def make_plain_text(value):
         if lines:
             return "\n".join(lines)
 
+        # Unknown dictionary shapes are flattened as key/value text pairs.
         for key, item in value.items():
             lines.append(str(key))
             item_text = make_plain_text(item)
@@ -78,11 +88,13 @@ def make_plain_text(value):
 
         return "\n".join(lines)
 
+    # Convert numbers and other unexpected values into usable text.
     return str(value).strip()
 
 
 def clean_ai_cv_data(data):
     """Normalize AI JSON output into plain text values for the CV model."""
+    # Keep and normalize only fields the tailoring workflow may rewrite.
     return {
         "job_title": make_plain_text(data.get("job_title")),
         "professional_summary": make_plain_text(data.get("professional_summary")),
@@ -97,10 +109,12 @@ class AIService:
 
     def __init__(self):
         """Create an OpenAI client using the configured API key."""
+        # The key comes from config/settings.py's environment configuration.
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     def improve_cv(self, cv_text, template="modern"):
         """Ask OpenAI to rewrite a CV text into a professionally improved version."""
+        # Build the user instruction separately, then send it with a system role.
         prompt = self._build_cv_prompt(cv_text, template)
 
         response = self.client.chat.completions.create(
@@ -117,6 +131,7 @@ class AIService:
             ],
         )
 
+        # This project uses the first generated choice as the displayed result.
         return response.choices[0].message.content
 
     def generate_cover_letter(self, cv_text, job_description, template="modern"):
@@ -126,7 +141,7 @@ class AIService:
             job_description,
             template,
         )
-
+        # JSON mode makes the returned field names machine-readable.
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -230,6 +245,7 @@ CV TEXT:
             ],
         )
 
+        # Convert the model's JSON string into a Python dictionary.
         return json.loads(response.choices[0].message.content)
 
     def analyse_job_description(self, cv_text, job_description):
@@ -359,19 +375,24 @@ Job Description:
             ],
         )
 
+        # Normalize any nested values before they are copied into CV text fields.
         raw_data = json.loads(response.choices[0].message.content)
         return clean_ai_cv_data(raw_data)
 
     def suggest_template(self, job_title="", summary="", skills=""):
         """Pick a default PDF template based on the candidate's career keywords."""
+        # Search all career text without case differences affecting matches.
         text = f"{job_title} {summary} {skills}".lower()
 
+        # Leadership terms select the formal executive design.
         if any(word in text for word in ["manager", "director", "executive", "lead"]):
             return "executive"
 
+        # Technical roles select the modern design.
         if any(word in text for word in ["developer", "engineer", "software", "it"]):
             return "modern"
 
+        # Classic is the neutral fallback.
         return "classic"
 
     def _build_cv_prompt(self, cv_text, template):

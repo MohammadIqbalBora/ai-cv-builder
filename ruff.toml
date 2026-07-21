@@ -1,7 +1,21 @@
+## Ruff checks Python code for common problems and keeps formatting consistent.
+
+# Keep lines at or below 88 characters when Ruff formats the code.
 line-length = 88
+
+# Treat the project as Python 3.12. This lets Ruff understand which Python
+# syntax and language features are available.
 target-version = "py312"
 
+# Settings in this section control Ruff's linter (the tool that reports
+# potential errors and style issues).
 [lint]
+
+# Enable these groups of linting rules:
+# - E: pycodestyle errors, such as spacing and indentation problems
+# - F: Pyflakes checks, such as undefined names and unused imports
+# - I: isort rules, which keep imports organized
+# - UP: pyupgrade rules, which suggest modern Python syntax
 select = [
     "E",
     "F",
@@ -9,10 +23,18 @@ select = [
     "UP",
 ]
 
+# Do not report the rule codes listed here.
+# E501 normally warns when a line is too long. Ruff's formatter handles line
+# length where possible, while some lines cannot be shortened automatically.
 ignore = [
     "E501",
 ]
 
+# Settings in this section control Ruff's automatic code formatter.
 [format]
+
+# Convert strings to use double quotes when Ruff can do so safely.
 quote-style = "double"
+
+# Indent code with spaces instead of tab characters.
 indent-style = "space"

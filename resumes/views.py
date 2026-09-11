@@ -133,6 +133,8 @@ def parse_cv_with_ai_or_fallback(extracted_text):
 @login_required
 def create_cv(request):
     """Create a new CV record or import an uploaded CV file via AI parsing."""
+    # Create CV: GET = show me the blank form
+    # Save CV: POST = here is my completed form
     if request.method == "POST":
         # The submit button identifies whether this is an import or normal save.
         action = request.POST.get("action")
@@ -149,6 +151,7 @@ def create_cv(request):
                 return render(request, "create_cv.html", {"form": form})
 
             # Save the file first because the parser needs its real disk path.
+            # The below refers to resumes/model.py: class CV(models.Model):
             cv = CV.objects.create(
                 user=request.user,
                 full_name="",
@@ -168,11 +171,15 @@ def create_cv(request):
 
         # Normal save CV
         # Bind normal text fields and an optional uploaded file to CVForm.
+        # The below line refers to: resumes/forms.py
         form = CVForm(request.POST, request.FILES)
 
         if form.is_valid():
             # Delay the insert because the form deliberately does not expose
             # the `user` field; ownership must come from the logged-in request.
+
+            # Creates the CV object in Python but does not save it to the database yet. #
+            # This gives the view time to add information that was deliberately excluded from the form #
             cv = form.save(commit=False)
             cv.user = request.user
             cv.save()
@@ -181,7 +188,7 @@ def create_cv(request):
     else:
         # GET requests display a blank creation form.
         form = CVForm()
-
+    # The below refers to resume/forms.py
     return render(request, "create_cv.html", {"form": form})
 
 

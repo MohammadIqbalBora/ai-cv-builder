@@ -109,7 +109,9 @@ def clean_ai_cv_data(data):
         "education": make_plain_text(data.get("education")),
     }
 
-
+# A class is a blueprint that groups related functions and information together. 
+# In this project, AIService groups together the functions that deal with AI, 
+# such as the function below:
 class AIService:
     """Provides OpenAI-backed CV parsing, improvement, and cover letter generation."""
 

@@ -118,16 +118,7 @@ def import_data_into_cv(cv, parsed_data):
     cv.save()
 
 
-def parse_cv_with_ai_or_fallback(extracted_text):
-    """Attempt AI parsing first, then fall back to a basic parser on error."""
-    try:
-        # Construct the API wrapper and ask it for structured CV fields.
-        ai = AIService()
-        return ai.parse_uploaded_cv(extracted_text)
-        # Any AI/network/parsing failure still leaves a local regex parser path.
-    except Exception as e:
-        print("AI import failed, using basic parser:", e)
-        return parse_cv_text(extracted_text)
+
 
 
 @login_required
@@ -182,7 +173,7 @@ def create_cv(request):
             # This gives the view time to add information that was deliberately excluded from the form #
             cv = form.save(commit=False)
             cv.user = request.user
-            cv.save()
+          ``    ``
             return redirect("dashboard")
 
     else:

@@ -10,6 +10,9 @@ import os
 from openai import OpenAI
 
 
+# make_plain_text(value)
+# Takes AI information that may be complicated, such as lists or dictionaries.
+# It converts it into simple text that can be stored in your CV fields.
 def make_plain_text(value):
     """Convert nested AI output values into a simple plain-text string."""
     # Represent missing data as an empty model field.
@@ -92,6 +95,9 @@ def make_plain_text(value):
     return str(value).strip()
 
 
+# clean_ai_cv_data(data)
+# Takes the information returned by the AI.
+# It cleans the important CV fields using make_plain_text().
 def clean_ai_cv_data(data):
     """Normalize AI JSON output into plain text values for the CV model."""
     # Keep and normalize only fields the tailoring workflow may rewrite.
@@ -107,11 +113,17 @@ def clean_ai_cv_data(data):
 class AIService:
     """Provides OpenAI-backed CV parsing, improvement, and cover letter generation."""
 
+    # __init__(self)
+    # Runs when you create an AIService object.
+    # It creates the OpenAI client using your OPENAI_API_KEY.
     def __init__(self):
         """Create an OpenAI client using the configured API key."""
         # The key comes from config/settings.py's environment configuration.
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+    # improve_cv(self, cv_text, template="modern")
+    # Sends the existing CV text to OpenAI.
+    # It asks AI to improve the CV professionally and returns the improved version.
     def improve_cv(self, cv_text, template="modern"):
         """Ask OpenAI to rewrite a CV text into a professionally improved version."""
         # Build the user instruction separately, then send it with a system role.
@@ -134,6 +146,9 @@ class AIService:
         # This project uses the first generated choice as the displayed result.
         return response.choices[0].message.content
 
+    # generate_cover_letter(self, cv_text, job_description, template="modern")
+    # Sends the CV and job description to OpenAI.
+    # It asks AI to write a cover letter suitable for that job.
     def generate_cover_letter(self, cv_text, job_description, template="modern"):
         """Generate a tailored cover letter from CV content and a job description."""
         prompt = self._build_cover_letter_prompt(
@@ -158,6 +173,10 @@ class AIService:
 
         return response.choices[0].message.content
 
+    # parse_uploaded_cv(self, extracted_text)
+    # Takes text extracted from an uploaded CV.
+    # AI identifies things such as the name, job title, email, skills, experience and education
+    # and returns them as structured data.
     def parse_uploaded_cv(self, extracted_text):
         """Extract structured CV fields from raw uploaded text using the AI model."""
         response = self.client.chat.completions.create(
@@ -248,6 +267,10 @@ CV TEXT:
         # Convert the model's JSON string into a Python dictionary.
         return json.loads(response.choices[0].message.content)
 
+    # analyse_job_description(self, cv_text, job_description)
+    # Gives AI the CV and the job description.
+    # AI compares them and produces things such as a match score, matched skills, missing skills
+    # and suggestions.
     def analyse_job_description(self, cv_text, job_description):
         """Compare the candidate CV against a job description and extract matching data."""
         response = self.client.chat.completions.create(
@@ -299,6 +322,10 @@ Rules:
 
         return json.loads(response.choices[0].message.content)
 
+    # tailor_cv_to_job(self, cv_text, job_description)
+    # Gives AI the CV and job description.
+    # AI rewrites the CV to make the candidate's existing skills and experience more relevant
+    # to that particular job, without inventing experience.
     def tailor_cv_to_job(self, cv_text, job_description):
         """Use AI to rewrite CV fields so they are tailored to the job description."""
         response = self.client.chat.completions.create(
@@ -379,6 +406,11 @@ Job Description:
         raw_data = json.loads(response.choices[0].message.content)
         return clean_ai_cv_data(raw_data)
 
+    # suggest_template(self, job_title="", summary="", skills="")
+    # Chooses a CV PDF template based on keywords.
+    # For example, a manager may get Executive, a software engineer may get Modern,
+    # otherwise it uses Classic. This particular function uses normal Python logic,
+    # not an OpenAI request.
     def suggest_template(self, job_title="", summary="", skills=""):
         """Pick a default PDF template based on the candidate's career keywords."""
         # Search all career text without case differences affecting matches.
@@ -395,6 +427,9 @@ Job Description:
         # Classic is the neutral fallback.
         return "classic"
 
+    # _build_cv_prompt(self, cv_text, template)
+    # Builds the instructions that will be sent to AI when improving a CV.
+    # In simple terms, it creates the question/instructions for the AI.
     def _build_cv_prompt(self, cv_text, template):
         """Create a simple prompt for AI CV improvement."""
         return f"""
@@ -405,6 +440,10 @@ CV:
 {cv_text}
 """
 
+    # _build_cover_letter_prompt(self, cv_text, job_description, template)
+    # Builds the detailed instructions for the AI to write the cover letter.
+    # It tells AI things like don't invent information, use the CV and job description,
+    # and produce only the finished letter.
     def _build_cover_letter_prompt(self, cv_text, job_description, template):
 
         return f"""

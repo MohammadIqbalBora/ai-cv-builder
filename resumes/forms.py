@@ -12,6 +12,8 @@ class CVForm(forms.ModelForm):
     """Form for creating and editing CV records."""
 
     # Meta connects this form class to its model and controls exposed fields.
+    # class Meta: is basically a configuration section inside your CVForm class. It tells Django which model this form belongs to and which fields from that model should be included.
+
     class Meta:
         # form.save() returns a new or updated CV instance.
         model = CV

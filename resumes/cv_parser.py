@@ -1,7 +1,12 @@
+# cv_parser.py reads an uploaded PDF or Word CV, extracts its text,
+# and then identifies information such as the name, email, phone number,
+# summary, skills, experience and education and puts them into structured fields.
+
 # This module turns uploaded CV text into structured information.
 
 # Regular expressions locate email addresses and phone-like text patterns.
 import re
+
 # Path safely extracts a filename extension on any operating system.
 from pathlib import Path
 

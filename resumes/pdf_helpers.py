@@ -1,3 +1,7 @@
+# pdf_helpers.py contains helper functions for creating CV PDFs,
+# including starting a new page when needed, adding footers, wrapping long text,
+# creating section headings, and displaying bullet points neatly.
+
 # This file helps build or display printable PDF versions of a CV.
 
 # ReportLab converts hex colors and draws them onto the PDF canvas.

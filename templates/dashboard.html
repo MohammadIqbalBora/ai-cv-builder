@@ -70,6 +70,7 @@
     <div class="dashboard-header">
       <div>
         <h1>My Dashboard</h1>
+        {% if pack_cv_credits or pack_letter_credits %}<p>Pack downloads remaining: {{ pack_cv_credits }} CVs and {{ pack_letter_credits }} cover letters (watermark-free).</p>{% endif %}
         {% if not is_premium %}<p class="text-muted">{{ total_cvs }} / 3 saved CVs on the Free plan. Tailored copies count towards this limit. {{ free_downloads_remaining }} / 3 free PDF downloads remaining across CVs and cover letters.</p>{% endif %}
 
         {% if is_premium %}

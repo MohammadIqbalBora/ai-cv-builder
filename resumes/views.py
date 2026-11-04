@@ -33,7 +33,8 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from .ai_service import AIService
 from .cv_parser import extract_text_from_cv, parse_cv_text
 from .forms import CVForm, TailoredCVReviewForm
-from .models import CV, CoverLetter, Subscription, FreeDownloadUsage
+from .models import CV, CoverLetter, Subscription, FreeDownloadUsage, ApplicationPack
+from .payments import fulfil_application_pack
 from .watermarks import watermark_pdf_response
 from .pdf_templates import (
     render_classic_pdf,
@@ -402,14 +403,23 @@ def enforce_download_limit(view):
             get_user_model().objects.select_for_update().get(pk=request.user.pk)
             premium = user_has_active_subscription(request.user)
             usage = None
+            pack = None
+            credit_field = "letter_downloads" if view.__name__ == "download_cover_letter_pdf" else "cv_downloads"
             if not premium:
-                usage, _ = FreeDownloadUsage.objects.get_or_create(user=request.user)
-                if usage.downloads >= 3:
-                    return render(request, "download_limit.html", status=403)
+                pack = ApplicationPack.objects.filter(user=request.user, **{credit_field + "__gt": 0}).order_by("created_at").first()
+                if not pack:
+                    usage, _ = FreeDownloadUsage.objects.get_or_create(user=request.user)
+                    if usage.downloads >= 3:
+                        return render(request, "download_limit.html", status=403)
+            request.clean_document_download = premium or pack is not None
             response = view(request, id)
-            if usage is not None and response.status_code == 200 and response.get("Content-Type") == "application/pdf":
-                usage.downloads += 1
-                usage.save(update_fields=["downloads"])
+            if response.status_code == 200 and response.get("Content-Type") == "application/pdf":
+                if pack:
+                    setattr(pack, credit_field, getattr(pack, credit_field) - 1)
+                    pack.save(update_fields=[credit_field])
+                elif usage is not None:
+                    usage.downloads += 1
+                    usage.save(update_fields=["downloads"])
             return response
     return wrapped
 
@@ -429,7 +439,7 @@ def download_cv_pdf(request, id):
         "executive": render_executive_pdf,
     }.get(template, render_modern_pdf)
     response = renderer(cv)
-    if not user_has_active_subscription(request.user):
+    if not request.clean_document_download:
         response = watermark_pdf_response(response)
     return response
 
@@ -474,7 +484,7 @@ def download_cover_letter_pdf(request, id):
     response = HttpResponse(buffer, content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="cover_letter.pdf"'
 
-    if not user_has_active_subscription(request.user):
+    if not request.clean_document_download:
         response = watermark_pdf_response(response)
     return response
 
@@ -497,6 +507,40 @@ def pricing(request):
         is_premium = True
 
     return render(request, "pricing.html", {"is_premium": is_premium, "subscription": subscription})
+
+
+@login_required
+def buy_application_pack(request):
+    if request.method != "POST":
+        return HttpResponse(status=405)
+    try:
+        checkout = stripe.checkout.Session.create(
+            mode="payment",
+            customer_email=request.user.email,
+            line_items=[{"price_data": {"currency": "gbp", "unit_amount": 199,
+                "product_data": {"name": "Job Application Pack", "description": "3 CV and 3 cover-letter PDF downloads, watermark-free"}}, "quantity": 1}],
+            metadata={"user_id": str(request.user.pk), "purchase": "application_pack"},
+            success_url=request.build_absolute_uri("/application-pack/success/") + "?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url=request.build_absolute_uri("/pricing/"),
+            api_key=settings.STRIPE_SECRET_KEY,
+        )
+        return redirect(checkout.url)
+    except stripe.StripeError:
+        return render(request, "application_pack_success.html", {"payment_error": True}, status=503)
+
+
+@login_required
+def application_pack_success(request):
+    confirmed = False
+    session_id = request.GET.get("session_id")
+    if session_id:
+        try:
+            session = stripe.checkout.Session.retrieve(session_id, api_key=settings.STRIPE_SECRET_KEY).to_dict()
+            if session.get("metadata", {}).get("user_id") == str(request.user.pk):
+                confirmed = fulfil_application_pack(session)
+        except stripe.StripeError:
+            pass
+    return render(request, "application_pack_success.html", {"confirmed": confirmed})
 
 
 @login_required
@@ -595,13 +639,19 @@ def stripe_webhook(request):
         return HttpResponse(status=400)
 
     try:
+        event = event.to_dict() if hasattr(event, "to_dict") else event
+        if event["type"] in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
+            payment_session = event["data"]["object"]
+            if payment_session.get("metadata", {}).get("purchase") == "application_pack":
+                fulfil_application_pack(payment_session)
+                return HttpResponse(status=200)
         # This event means Stripe successfully created the checkout session.
-        if event["type"] == "checkout.session.completed":
+        if event["type"] == "checkout.session.completed" and event["data"]["object"].get("mode") == "subscription" and event["data"]["object"].get("payment_status") == "paid":
             session = event["data"]["object"]
 
             # Recover the Django user ID placed in checkout metadata earlier.
-            metadata = getattr(session, "metadata", None)
-            user_id = getattr(metadata, "user_id", None) if metadata else None
+            metadata = session.get("metadata", {})
+            user_id = metadata.get("user_id")
 
             logger.info("Stripe webhook user_id: %s", user_id)
 
@@ -619,16 +669,8 @@ def stripe_webhook(request):
                     )
 
                     # Store Stripe identifiers for later billing reconciliation.
-                    subscription.stripe_customer_id = getattr(
-                        session,
-                        "customer",
-                        None,
-                    )
-                    subscription.stripe_subscription_id = getattr(
-                        session,
-                        "subscription",
-                        None,
-                    )
+                    subscription.stripe_customer_id = session.get("customer")
+                    subscription.stripe_subscription_id = session.get("subscription")
 
                     # Grant premium access locally after verified checkout.
                     subscription.cancel_at_period_end = False

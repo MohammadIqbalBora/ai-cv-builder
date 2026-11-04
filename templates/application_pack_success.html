@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block content %}
+<div class="container py-5 text-center">
+{% if confirmed %}<h1>Your Job Application Pack is ready</h1><p>Three CV downloads and three cover-letter downloads have been added to your account. Pack downloads are watermark-free.</p>
+{% elif payment_error %}<h1>Checkout is unavailable</h1><p>We could not open checkout. Please try again from the plans page.</p>
+{% else %}<h1>Waiting for payment confirmation</h1><p>Your downloads will be added once Stripe confirms payment. You can refresh this page or check your dashboard shortly.</p>{% endif %}
+<a href="{% url 'dashboard' %}" class="btn btn-primary">Go to dashboard</a>
+<a href="{% url 'pricing' %}" class="btn btn-outline-secondary">Back to plans</a>
+</div>{% endblock %}

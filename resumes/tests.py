@@ -393,3 +393,69 @@ class CancelSubscriptionTests(TestCase):
         self.sub.refresh_from_db()
         self.assertTrue(self.sub.cancel_at_period_end)
         self.assertEqual(int(self.sub.premium_until.timestamp()), int(self.end.timestamp()))
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+class ApplicationPackTests(TestCase):
+    def setUp(self):
+        from .models import ApplicationPack
+        self.Pack = ApplicationPack
+        self.user = User.objects.create_user(username="pack-owner")
+        self.client.force_login(self.user)
+        self.cv = CV.objects.create(user=self.user, full_name="Pack Candidate")
+        CoverLetter.objects.create(user=self.user, cv=self.cv, content="Saved letter", job_description="Role")
+        FreeDownloadUsage.objects.create(user=self.user, downloads=3)
+        self.session = {"id": "cs_pack_example", "mode": "payment", "payment_status": "paid", "currency": "gbp", "amount_total": 199, "metadata": {"purchase": "application_pack", "user_id": str(self.user.pk)}}
+
+    def test_fulfilment_is_paid_validated_and_idempotent(self):
+        from .payments import fulfil_application_pack
+        for override in [{"payment_status": "unpaid"}, {"amount_total": 1}, {"currency": "usd"}, {"mode": "subscription"}]:
+            self.assertFalse(fulfil_application_pack(dict(self.session, **override)))
+        self.assertFalse(self.Pack.objects.exists())
+        self.assertTrue(fulfil_application_pack(self.session))
+        self.assertTrue(fulfil_application_pack(self.session))
+        self.assertEqual(self.Pack.objects.count(), 1)
+
+    def test_separate_allowances_and_clean_downloads(self):
+        from .payments import fulfil_application_pack
+        from io import BytesIO
+        from pypdf import PdfReader
+        fulfil_application_pack(self.session)
+        for _ in range(3):
+            response = self.client.get(reverse("download_cv_pdf", args=[self.cv.pk]))
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn("AI CV Builder - Free Version", PdfReader(BytesIO(response.content)).pages[0].extract_text())
+        self.assertEqual(self.client.get(reverse("download_cv_pdf", args=[self.cv.pk])).status_code, 403)
+        pack = self.Pack.objects.get()
+        self.assertEqual(pack.letter_downloads, 3)
+        for _ in range(3):
+            self.assertEqual(self.client.get(reverse("download_cover_letter_pdf", args=[self.cv.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("download_cover_letter_pdf", args=[self.cv.pk])).status_code, 403)
+        self.assertEqual(FreeDownloadUsage.objects.get(user=self.user).downloads, 3)
+
+    @patch("resumes.views.stripe.checkout.Session.create")
+    def test_checkout_uses_fixed_one_off_price(self, create):
+        create.return_value.url = "https://checkout.stripe.com/example"
+        self.assertEqual(self.client.get(reverse("buy_application_pack")).status_code, 405)
+        self.assertEqual(self.client.post(reverse("buy_application_pack"), {"amount": 1}).status_code, 302)
+        args = create.call_args.kwargs
+        self.assertEqual(args["mode"], "payment")
+        self.assertEqual(args["line_items"][0]["price_data"]["unit_amount"], 199)
+        self.assertEqual(args["metadata"]["user_id"], str(self.user.pk))
+
+    @patch("resumes.views.stripe.Webhook.construct_event")
+    def test_pack_webhook_never_activates_premium(self, event):
+        import stripe
+        event.return_value = stripe.Event.construct_from({"type": "checkout.session.completed", "data": {"object": self.session}}, "test-key")
+        for _ in range(2):
+            self.assertEqual(self.client.post(reverse("stripe_webhook"), data=b"{}", content_type="application/json").status_code, 200)
+        self.assertEqual(self.Pack.objects.count(), 1)
+        self.assertFalse(Subscription.objects.filter(user=self.user).exists())
+
+    @patch("resumes.views.stripe.checkout.Session.retrieve")
+    def test_success_cannot_claim_another_users_payment(self, retrieve):
+        import stripe
+        other = User.objects.create_user(username="pack-intruder")
+        self.client.force_login(other)
+        retrieve.return_value = stripe.checkout.Session.construct_from(self.session, "test-key")
+        self.client.get(reverse("application_pack_success"), {"session_id": self.session["id"]})
+        self.assertFalse(self.Pack.objects.exists())

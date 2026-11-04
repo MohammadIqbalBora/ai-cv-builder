@@ -839,7 +839,7 @@ body:has(.dashboard-page) .page-shell {
 
 /* Pricing: compact screen fit */
 body:has(.pricing-page) {
-    overflow: hidden;
+    overflow: auto;
 }
 
 body:has(.pricing-page) footer {
@@ -847,8 +847,9 @@ body:has(.pricing-page) footer {
 }
 
 .pricing-page {
-    height: calc(100vh - 110px);
-    overflow: hidden;
+    min-height: calc(100vh - 110px);
+    height: auto;
+    overflow: visible;
 }
 
 .pricing-header {

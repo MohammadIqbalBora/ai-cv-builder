@@ -119,3 +119,11 @@ class FreeDownloadUsage(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     downloads = models.PositiveIntegerField(default=0)
+
+
+class ApplicationPack(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    checkout_session_id = models.CharField(max_length=255, unique=True)
+    cv_downloads = models.PositiveIntegerField(default=3)
+    letter_downloads = models.PositiveIntegerField(default=3)
+    created_at = models.DateTimeField(auto_now_add=True)

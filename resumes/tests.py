@@ -7,7 +7,7 @@ from django.urls import reverse
 from .models import CV, CoverLetter, Subscription
 
 
-@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
 class SavedCoverLetterTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="owner")
@@ -99,3 +99,67 @@ class ProfessionAwarePromptTests(TestCase):
         self.assertIn("candidate's own profession", prompt)
         self.assertNotIn("Red Hat 7", prompt)
         self.assertNotIn("HP Servers", prompt)
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+class CVUploadTests(TestCase):
+    def setUp(self):
+        import tempfile
+        self.media = tempfile.TemporaryDirectory()
+        self.addCleanup(self.media.cleanup)
+        override = override_settings(MEDIA_ROOT=self.media.name)
+        override.enable()
+        self.addCleanup(override.disable)
+        self.user = User.objects.create_user(username="upload-owner")
+        self.client.force_login(self.user)
+
+    def upload(self):
+        from io import BytesIO
+        from docx import Document
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        document = Document()
+        document.add_paragraph("Alex Example")
+        document.add_paragraph("Skills")
+        document.add_paragraph("Lesson planning")
+        document.add_paragraph("Education")
+        document.add_paragraph("PGCE")
+        buffer = BytesIO()
+        document.save(buffer)
+        return SimpleUploadedFile("teacher.docx", buffer.getvalue())
+
+    @patch("resumes.views.AIService")
+    def test_docx_import_saves_parsed_cv(self, ai):
+        ai.return_value.parse_uploaded_cv.return_value = {"full_name": "Alex Example", "job_title": "English Teacher", "skills": "Lesson planning"}
+        response = self.client.post(reverse("create_cv"), {"action": "import", "uploaded_file": self.upload()})
+        cv = CV.objects.get(user=self.user)
+        self.assertRedirects(response, reverse("edit_cv", args=[cv.id]))
+        self.assertEqual(cv.job_title, "English Teacher")
+        self.assertEqual(cv.skills, "Lesson planning")
+
+    @patch("resumes.views.AIService")
+    def test_import_falls_back_if_ai_is_unavailable(self, ai):
+        ai.return_value.parse_uploaded_cv.side_effect = RuntimeError("Unavailable")
+        response = self.client.post(reverse("create_cv"), {"action": "import", "uploaded_file": self.upload()})
+        self.assertEqual(response.status_code, 302)
+        cv = CV.objects.get(user=self.user)
+        self.assertEqual(cv.full_name, "Alex Example")
+        self.assertIn("Lesson planning", cv.skills)
+
+    def test_corrupt_upload_shows_error_without_creating_cv(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        response = self.client.post(reverse("create_cv"), {"action": "import", "uploaded_file": SimpleUploadedFile("broken.docx", b"broken")})
+        self.assertContains(response, "This file could not be read")
+        self.assertFalse(CV.objects.exists())
+
+    @patch("resumes.views.AIService")
+    def test_pdf_import_saves_parsed_cv(self, ai):
+        from io import BytesIO
+        from reportlab.pdfgen.canvas import Canvas
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        buffer = BytesIO()
+        canvas = Canvas(buffer)
+        canvas.drawString(50, 750, "Alex Example - Plumber")
+        canvas.save()
+        ai.return_value.parse_uploaded_cv.return_value = {"full_name": "Alex Example", "job_title": "Plumber"}
+        response = self.client.post(reverse("create_cv"), {"action": "import", "uploaded_file": SimpleUploadedFile("plumber.pdf", buffer.getvalue())})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(CV.objects.get().job_title, "Plumber")

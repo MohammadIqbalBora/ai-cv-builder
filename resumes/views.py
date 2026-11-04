@@ -114,6 +114,19 @@ def dashboard(request):
     )
 
 
+def parse_cv_with_ai_or_fallback(extracted_text):
+    """Use AI parsing when available, retaining local parsing as a fallback."""
+    try:
+        data = AIService().parse_uploaded_cv(extracted_text)
+        if not isinstance(data, dict):
+            raise ValueError("CV parser must return a dictionary")
+        from .ai_service import make_plain_text
+        return {key: make_plain_text(value) for key, value in data.items()}
+    except Exception:
+        logger.warning("AI CV parsing failed; using local parsing", exc_info=True)
+        return parse_cv_text(extracted_text)
+
+
 def import_data_into_cv(cv, parsed_data):
     """Copy parsed CV values into the CV model and save it."""
     # For every field, prefer a non-empty parsed value and otherwise retain the
@@ -159,20 +172,36 @@ def create_cv(request):
                 form.add_error("uploaded_file", "Please choose a CV file to import.")
                 return render(request, "create_cv.html", {"form": form})
 
-            # Save the file first because the parser needs its real disk path.
-            # The below refers to resumes/model.py: class CV(models.Model):
+            form = CVForm(request.POST, request.FILES)
+            if not uploaded_file.name.lower().endswith((".pdf", ".docx")):
+                form.add_error("uploaded_file", "Please upload a PDF or DOCX file.")
+                return render(request, "create_cv.html", {"form": form})
+
+            # Extract directly from the upload before saving any database record.
+            try:
+                from .cv_parser import extract_text_from_pdf, extract_text_from_docx
+                extractor = extract_text_from_pdf if uploaded_file.name.lower().endswith(".pdf") else extract_text_from_docx
+                extracted_text = extractor(uploaded_file)
+            except Exception:
+                logger.warning("Could not read uploaded CV", exc_info=True)
+                form.add_error("uploaded_file", "This file could not be read. Please upload a valid PDF or DOCX.")
+                return render(request, "create_cv.html", {"form": form})
+
+            if not extracted_text.strip():
+                form.add_error("uploaded_file", "No readable text was found. Please upload a text-based PDF or DOCX rather than a scanned image.")
+                return render(request, "create_cv.html", {"form": form})
+
+            parsed_data = parse_cv_with_ai_or_fallback(extracted_text)
+            uploaded_file.seek(0)
+            template = request.POST.get("template", "modern")
+            if template not in dict(CV.TEMPLATE_CHOICES):
+                template = "modern"
             cv = CV.objects.create(
                 user=request.user,
                 full_name="",
                 uploaded_file=uploaded_file,
-                template=request.POST.get("template", "modern"),
+                template=template,
             )
-
-            # Convert PDF/DOCX content to text, then structure that text.
-            extracted_text = extract_text_from_cv(cv.uploaded_file.path)
-            parsed_data = parse_cv_with_ai_or_fallback(extracted_text)
-
-            # Copy detected values into the placeholder CV record.
             import_data_into_cv(cv, parsed_data)
 
             # Let the user review and correct imported fields.

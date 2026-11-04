@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5" style="max-width: 680px">
+  <div class="card"><div class="card-body p-4">
+    <h1>Delete your account</h1>
+    <p>This permanently deletes your profile, all saved CVs, cover letters and uploaded CV files from this site. You will be signed out and cannot undo this action.</p>
+    <p>If you have a linked Stripe subscription, it will be cancelled before your account is deleted.</p>
+    <p>Download any documents you want to keep before continuing.</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="mb-3">{{ form.password.label_tag }} {{ form.password }} {{ form.password.errors }}</div>
+      <div class="mb-3">{{ form.confirm }} {{ form.confirm.label_tag }} {{ form.confirm.errors }}</div>
+      <button type="submit" class="btn btn-danger">Permanently delete my account</button>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Keep my account</a>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

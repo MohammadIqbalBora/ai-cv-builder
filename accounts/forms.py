@@ -64,3 +64,21 @@ class RegisterForm(UserCreationForm):
                 "placeholder": "Confirm your password",
             }
         )
+
+
+class DeleteAccountForm(forms.Form):
+    password = forms.CharField(
+        label="Current password",
+        widget=forms.PasswordInput(attrs={"class": "form-control", "autocomplete": "current-password"}),
+    )
+    confirm = forms.BooleanField(label="I understand that my account and saved documents will be permanently deleted.")
+
+    def __init__(self, *args, user, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise forms.ValidationError("Your password is incorrect.")
+        return password

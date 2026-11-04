@@ -10,6 +10,7 @@ from . import views
 
 # config/urls.py places all of these routes below /accounts/.
 urlpatterns = [
+    path("delete/", views.delete_account, name="delete_account"),
     # /accounts/login/ displays and processes Django's login form.
     path("login/", auth_views.LoginView.as_view(), name="login"),
     # /accounts/logout/ ends the current authenticated session.

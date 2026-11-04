@@ -11,6 +11,7 @@ from . import views
 # config/urls.py includes this table at the site root, so these fragments do
 # not receive an additional prefix.
 urlpatterns = [
+    path("subscription/cancel/", views.cancel_subscription, name="cancel_subscription"),
     path("cv/<int:id>/review/", views.review_tailored_cv, name="review_tailored_cv"),
     # Public landing page.
     path("", views.home, name="home"),

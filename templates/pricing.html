@@ -23,6 +23,11 @@
 
     </div>
 
+    {% if subscription.cancel_at_period_end %}
+    <div class="alert alert-info">Your subscription will not renew. Premium access ends on {{ subscription.premium_until|date:"j F Y, H:i T" }}. Your account and saved documents remain available on the Free plan afterwards.</div>
+    {% elif is_premium and subscription.stripe_subscription_id %}
+    <p class="text-center"><a href="{% url 'cancel_subscription' %}" class="btn btn-outline-secondary">Cancel subscription</a></p>
+    {% endif %}
     <div class="row g-5 justify-content-center">
 
         <!-- FREE -->

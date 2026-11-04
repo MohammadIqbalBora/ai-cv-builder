@@ -92,7 +92,7 @@ def dashboard(request):
     plan_name = "Free"
 
     # Convert database state into simple values the template can display.
-    if subscription and subscription.is_active:
+    if subscription and subscription.has_premium_access:
         is_premium = True
         plan_name = subscription.plan_name
 
@@ -314,7 +314,8 @@ def delete_cv(request, id):
 
 def user_has_active_subscription(user):
     """Return True when the user has an active premium subscription."""
-    return Subscription.objects.filter(user=user, is_active=True).exists()
+    subscription = Subscription.objects.filter(user=user).first()
+    return bool(subscription and subscription.has_premium_access)
 
 
 @login_required
@@ -492,10 +493,42 @@ def pricing(request):
 
     is_premium = False
 
-    if subscription and subscription.is_active:
+    if subscription and subscription.has_premium_access:
         is_premium = True
 
-    return render(request, "pricing.html", {"is_premium": is_premium})
+    return render(request, "pricing.html", {"is_premium": is_premium, "subscription": subscription})
+
+
+@login_required
+def cancel_subscription(request):
+    """Stop renewal without deleting the account or its documents."""
+    from datetime import datetime, timezone as datetime_timezone
+
+    if request.method not in ("GET", "POST"):
+        return HttpResponse(status=405)
+    subscription = Subscription.objects.filter(user=request.user).first()
+    error = None
+    if request.method == "POST" and subscription and subscription.stripe_subscription_id and not subscription.cancel_at_period_end:
+        try:
+            remote = stripe.Subscription.modify(
+                subscription.stripe_subscription_id,
+                cancel_at_period_end=True,
+                api_key=settings.STRIPE_SECRET_KEY,
+            )
+            end = remote.get("cancel_at") or remote.get("current_period_end")
+            if not end:
+                ends = [item.get("current_period_end") for item in remote.get("items", {}).get("data", []) if item.get("current_period_end")]
+                end = max(ends) if ends else None
+            if not end:
+                raise ValueError("Missing subscription period end")
+            subscription.cancel_at_period_end = True
+            subscription.premium_until = datetime.fromtimestamp(end, tz=datetime_timezone.utc)
+            subscription.save(update_fields=["cancel_at_period_end", "premium_until", "updated_at"])
+            return redirect("pricing")
+        except (stripe.StripeError, ValueError):
+            logger.warning("Could not confirm subscription cancellation for user %s", request.user.pk)
+            error = "We could not confirm your cancellation. Please try again."
+    return render(request, "cancel_subscription.html", {"subscription": subscription, "error": error})
 
 
 @login_required
@@ -597,6 +630,8 @@ def stripe_webhook(request):
                     )
 
                     # Grant premium access locally after verified checkout.
+                    subscription.cancel_at_period_end = False
+                    subscription.premium_until = None
                     subscription.is_active = True
                     subscription.plan_name = "Premium"
                     subscription.save()
@@ -605,6 +640,10 @@ def stripe_webhook(request):
                         "Subscription activated for user ID %s",
                         user_id,
                     )
+
+        elif event["type"] == "customer.subscription.deleted":
+            remote = event["data"]["object"]
+            Subscription.objects.filter(stripe_subscription_id=remote["id"]).update(is_active=False)
 
     except Exception:
         logger.exception("Stripe webhook processing failed")

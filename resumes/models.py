@@ -74,6 +74,16 @@ class Subscription(models.Model):
     # The webhook/payment flow changes this flag when access is active.
     is_active = models.BooleanField(default=False)
 
+    cancel_at_period_end = models.BooleanField(default=False)
+    premium_until = models.DateTimeField(blank=True, null=True)
+
+    @property
+    def has_premium_access(self):
+        from django.utils import timezone
+        return self.is_active and (not self.cancel_at_period_end or (
+            self.premium_until is not None and self.premium_until > timezone.now()
+        ))
+
     # New users start on the Free plan.
     plan_name = models.CharField(
         max_length=20,

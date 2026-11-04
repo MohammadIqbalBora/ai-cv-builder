@@ -3,9 +3,8 @@ from .models import Subscription, FreeDownloadUsage
 
 def document_access(request):
     """Use current subscription state, never a browser-supplied plan flag."""
-    premium = request.user.is_authenticated and Subscription.objects.filter(
-        user=request.user, is_active=True
-    ).exists()
+    subscription = Subscription.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+    premium = bool(subscription and subscription.has_premium_access)
     remaining = 3
     if request.user.is_authenticated and not premium:
         usage = FreeDownloadUsage.objects.filter(user=request.user).first()

@@ -328,3 +328,54 @@ class DownloadLimitTests(TestCase):
         sub.is_active = False
         sub.save()
         self.assertEqual(self.client.get(reverse("download_cv_pdf", args=[self.cv.id])).status_code, 403)
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+class CancelSubscriptionTests(TestCase):
+    def setUp(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        self.user = User.objects.create_user(username="cancel-owner")
+        self.client.force_login(self.user)
+        self.sub = Subscription.objects.create(user=self.user, is_active=True, plan_name="Premium", stripe_subscription_id="sub_own")
+        self.end = timezone.now() + timedelta(days=10)
+        self.cv = CV.objects.create(user=self.user, full_name="Saved")
+
+    @patch("resumes.views.stripe.Subscription.modify")
+    def test_confirmation_then_cancellation_keeps_account_and_access(self, modify):
+        modify.return_value = {"cancel_at": int(self.end.timestamp())}
+        self.assertContains(self.client.get(reverse("cancel_subscription")), "Confirm cancellation")
+        modify.assert_not_called()
+        self.assertRedirects(self.client.post(reverse("cancel_subscription")), reverse("pricing"))
+        self.sub.refresh_from_db()
+        self.assertTrue(self.sub.cancel_at_period_end)
+        self.assertTrue(self.sub.has_premium_access)
+        self.assertTrue(User.objects.filter(pk=self.user.pk).exists())
+        self.assertTrue(CV.objects.filter(pk=self.cv.pk).exists())
+        self.assertEqual(modify.call_args.args, ("sub_own",))
+        self.client.post(reverse("cancel_subscription"))
+        self.assertEqual(modify.call_count, 1)
+
+    def test_premium_expires_without_webhook(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        from resumes.views import user_has_active_subscription
+        self.sub.cancel_at_period_end = True
+        self.sub.premium_until = timezone.now() - timedelta(seconds=1)
+        self.sub.save()
+        self.assertFalse(user_has_active_subscription(self.user))
+        self.assertContains(self.client.get(reverse("cv_preview", args=[self.cv.pk])), "free-document")
+
+    @patch("resumes.views.stripe.Subscription.modify")
+    def test_failure_does_not_claim_cancellation(self, modify):
+        import stripe
+        modify.side_effect = stripe.APIConnectionError("Unavailable")
+        self.assertContains(self.client.post(reverse("cancel_subscription")), "could not confirm")
+        self.sub.refresh_from_db()
+        self.assertFalse(self.sub.cancel_at_period_end)
+
+    @patch("resumes.views.stripe.Subscription.modify")
+    def test_free_user_cannot_cancel_someone_elses_plan(self, modify):
+        other = User.objects.create_user(username="cancel-other")
+        self.client.force_login(other)
+        self.client.post(reverse("cancel_subscription"), {"subscription_id": "sub_own"})
+        modify.assert_not_called()

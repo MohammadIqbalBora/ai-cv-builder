@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5" style="max-width: 700px">
+<h1>Cancel your Premium subscription</h1>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+{% if subscription.cancel_at_period_end %}
+<p>Your subscription is already set to stop renewing. Premium access ends on {{ subscription.premium_until|date:"j F Y, H:i T" }}.</p>
+{% elif subscription.stripe_subscription_id %}
+<p>You will keep Premium until the end of your current paid billing period. Your subscription will not renew.</p>
+<p>Your account, CVs and cover letters will stay saved. After Premium ends, free-plan watermarks and limits apply. Existing documents will not be deleted.</p>
+<form method="post">{% csrf_token %}<button class="btn btn-danger" type="submit">Confirm cancellation</button></form>
+{% else %}<p>You have no linked subscription to cancel.</p>{% endif %}
+<a href="{% url 'pricing' %}" class="btn btn-outline-secondary mt-3">Back to plans</a>
+</div>
+{% endblock %}

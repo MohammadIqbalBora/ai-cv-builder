@@ -1,6 +1,8 @@
 # This module defines the data stored in the database.
 
 # Link CV and subscription records to Django's built-in account model.
+import uuid
+
 from django.contrib.auth.models import User
 # Django model fields describe database columns and relationships.
 from django.db import models
@@ -127,3 +129,33 @@ class ApplicationPack(models.Model):
     cv_downloads = models.PositiveIntegerField(default=3)
     letter_downloads = models.PositiveIntegerField(default=3)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class JobAlertPreference(models.Model):
+    """One explicit, revocable weekly job-alert subscription per account."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    cv = models.ForeignKey(CV, on_delete=models.SET_NULL, null=True, blank=True)
+    target_role = models.CharField(max_length=150)
+    location = models.CharField(max_length=150)
+    radius_miles = models.PositiveSmallIntegerField(default=25)
+    minimum_salary = models.PositiveIntegerField(null=True, blank=True)
+    work_preference = models.CharField(max_length=10, default="any")
+    enabled = models.BooleanField(default=False)
+    confirmed_email = models.EmailField(blank=True)
+    confirmation_email = models.EmailField(blank=True)
+    confirmation_sent_at = models.DateTimeField(null=True, blank=True)
+    consented_at = models.DateTimeField(null=True, blank=True)
+    last_checked_at = models.DateTimeField(null=True, blank=True)
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    email_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+
+
+class SentJobAlert(models.Model):
+    preference = models.ForeignKey(JobAlertPreference, on_delete=models.CASCADE)
+    provider_job_id = models.CharField(max_length=200)
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["preference", "provider_job_id"], name="unique_sent_job_alert")]

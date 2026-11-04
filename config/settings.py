@@ -246,3 +246,19 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     # Send the CSRF protection cookie only over HTTPS as well.
     CSRF_COOKIE_SECURE = True
+
+
+# Job alerts stay off until licensed API access and email delivery are configured.
+JOB_ALERTS_ENABLED = os.getenv("JOB_ALERTS_ENABLED", "False").lower() == "true"
+ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID", "")
+ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY", "")
+SITE_URL = os.getenv("DOMAIN", "").rstrip("/")
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
+EMAIL_TIMEOUT = 15
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "")

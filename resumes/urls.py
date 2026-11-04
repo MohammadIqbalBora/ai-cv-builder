@@ -6,11 +6,14 @@
 from django.urls import path
 
 # Import the view functions named in the route table below.
-from . import views
+from . import views, job_alert_views
 
 # config/urls.py includes this table at the site root, so these fragments do
 # not receive an additional prefix.
 urlpatterns = [
+    path("job-alerts/", job_alert_views.preferences, name="job_alert_preferences"),
+    path("job-alerts/confirm/<uuid:token>/", job_alert_views.confirm_email, name="confirm_job_alerts"),
+    path("job-alerts/unsubscribe/<uuid:token>/", job_alert_views.unsubscribe, name="unsubscribe_job_alerts"),
     path("application-pack/buy/", views.buy_application_pack, name="buy_application_pack"),
     path("application-pack/success/", views.application_pack_success, name="application_pack_success"),
     path("subscription/cancel/", views.cancel_subscription, name="cancel_subscription"),

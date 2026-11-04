@@ -4,7 +4,7 @@
 from django import forms
 
 # The ModelForm below creates or updates this database model.
-from .models import CV
+from .models import CV, JobAlertPreference
 
 
 # ModelForm converts selected CV model fields into HTML form fields.
@@ -72,3 +72,33 @@ class TailoredCVReviewForm(forms.ModelForm):
         for name in self.fields:
             if name != "job_title":
                 self.fields[name].widget = forms.Textarea(attrs={"class": "form-control", "rows": 8})
+
+
+class JobAlertForm(forms.ModelForm):
+    radius_miles = forms.TypedChoiceField(
+        choices=[(5, "5 miles"), (10, "10 miles"), (25, "25 miles"), (50, "50 miles"), (100, "100 miles")], coerce=int,
+        label="Travel radius",
+    )
+    work_preference = forms.ChoiceField(choices=[("any", "Any working arrangement"), ("remote", "Remote only"), ("hybrid", "Hybrid only")])
+    minimum_salary = forms.IntegerField(required=False, min_value=0, max_value=1000000, label="Minimum annual salary (GBP)")
+    enabled = forms.BooleanField(required=False, label="Email me weekly job matches (up to five new jobs). I can unsubscribe at any time.")
+
+    class Meta:
+        model = JobAlertPreference
+        fields = ["cv", "target_role", "location", "radius_miles", "minimum_salary", "work_preference", "enabled"]
+        labels = {"cv": "CV to match against", "target_role": "Target job title", "location": "UK town, city or postcode"}
+
+    def __init__(self, *args, user, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        self.fields["cv"].queryset = CV.objects.filter(user=user).order_by("-created_at")
+        self.fields["cv"].required = True
+        for name, field in self.fields.items():
+            if name != "enabled":
+                field.widget.attrs["class"] = "form-control"
+
+    def clean(self):
+        data = super().clean()
+        if data.get("enabled") and not self.user.email:
+            self.add_error("enabled", "Your account needs an email address before you can receive alerts.")
+        return data

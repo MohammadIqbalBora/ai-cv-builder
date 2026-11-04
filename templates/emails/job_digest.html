@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><body style="font-family:Arial,sans-serif;color:#10243d">
+<h1>Your weekly job matches</h1>
+<p>These UK vacancies share words with your CV. Read the full adverts to check requirements and availability. Matching is not a guarantee of suitability.</p>
+{% for job in jobs %}<div style="padding:16px;border-bottom:1px solid #ccc">
+<h2><a href="{{ job.url }}">{{ job.title }}</a></h2><p>{{ job.company }} &middot; {{ job.location }}</p><p>{{ job.reason }}</p>
+<p><a href="{{ job.url }}">View vacancy and apply</a></p>
+<a href="https://www.adzuna.co.uk/" style="display:inline-block;min-width:116px;min-height:23px;font-size:24px">Adzuna</a>
+</div>{% endfor %}
+<p><a href="{{ preferences_url }}">Change preferences</a> &middot; <a href="{{ unsubscribe_url }}">Stop job alert emails</a></p>
+</body></html>

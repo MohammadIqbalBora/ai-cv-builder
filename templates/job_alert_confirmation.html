@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block content %}
+<div class="container py-5" style="max-width:700px">
+{% if done %}<h1>Email confirmed</h1><p>Your weekly job alerts are enabled. Emails are sent only while your Premium access is active.</p>
+{% elif valid %}<h1>Confirm job alert emails</h1><p>Confirm that you want weekly job-match emails from AI CV Builder. You can unsubscribe at any time.</p><form method="post">{% csrf_token %}<button type="submit" class="btn btn-primary">Confirm my job alerts</button></form>
+{% else %}<h1>This confirmation link is no longer active</h1><p>Open your job alert preferences to request a new confirmation email or enable alerts again.</p>{% endif %}
+<a href="{% url 'job_alert_preferences' %}" class="btn btn-outline-secondary mt-3">Job alert preferences</a>
+</div>{% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block content %}
+<div class="container py-5" style="max-width:700px">
+{% if done %}<h1>Job alerts paused</h1><p>You will no longer receive job alert emails. Your account and documents are unchanged.</p>
+{% else %}<h1>Stop job alert emails?</h1><p>This pauses job emails without deleting your account.</p><form method="post">{% csrf_token %}<button type="submit" class="btn btn-primary">Stop job alert emails</button></form>{% endif %}
+<a href="{% url 'job_alert_preferences' %}" class="btn btn-outline-secondary mt-3">Job alert preferences</a>
+</div>{% endblock %}

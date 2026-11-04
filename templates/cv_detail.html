@@ -4,12 +4,13 @@
 {% extends 'base.html' %} 
 
 {% block content %}
+{% include "includes/free_document_notice.html" %}
 
 <h2>CV Preview</h2>
 
 {% if cv.template == "modern" %}
 
-<div class="card p-4 border-primary">
+<div class="card {% if watermarked_documents %}free-document{% endif %} p-4 border-primary">
   <h1>{{ cv.full_name }}</h1>
   <p><strong>{{ cv.job_title }}</strong></p>
 
@@ -30,7 +31,7 @@
 
 {% elif cv.template == "classic" %}
 
-<div class="card p-4">
+<div class="card {% if watermarked_documents %}free-document{% endif %} p-4">
   <h2>{{ cv.full_name }}</h2>
   <p>{{ cv.email }} | {{ cv.phone }}</p>
 
@@ -51,7 +52,7 @@
 
 {% elif cv.template == "executive" %}
 
-<div class="card p-4 border-dark bg-light">
+<div class="card {% if watermarked_documents %}free-document{% endif %} p-4 border-dark bg-light">
   <h1 class="template-executive-name">{{ cv.full_name }}</h1>
 
   <p><strong>{{ cv.job_title }}</strong></p>

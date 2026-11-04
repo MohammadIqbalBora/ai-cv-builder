@@ -34,6 +34,7 @@ from .ai_service import AIService
 from .cv_parser import extract_text_from_cv, parse_cv_text
 from .forms import CVForm, TailoredCVReviewForm
 from .models import CV, CoverLetter, Subscription
+from .watermarks import watermark_pdf_response
 from .pdf_templates import (
     render_classic_pdf,
     render_executive_pdf,
@@ -301,10 +302,6 @@ def user_has_active_subscription(user):
 @login_required
 def improve_cv_ai(request, id):
     """Improve a CV using AI and show the rewritten result."""
-    # Premium-only tools send free users to Stripe subscription checkout.
-    if not user_has_active_subscription(request.user):
-        return redirect("subscribe")
-
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     ai = AIService()
@@ -328,9 +325,6 @@ Education: {cv.education}
 @login_required
 def create_cover_letter(request, id):
     """Generate or display a cover letter for a CV based on the last job description."""
-    if not user_has_active_subscription(request.user):
-        return redirect("subscribe")
-
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     saved_letter = None
@@ -380,33 +374,25 @@ Experience: {cv.experience}
 @login_required
 def download_cv_pdf(request, id):
     """Return the selected CV as a downloadable PDF based on the chosen template."""
-    if not user_has_active_subscription(request.user):
-        return redirect("subscribe")
-
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     # A query-string preview choice overrides the model's saved template.
     template = request.GET.get("template", cv.template)
 
-    # Dispatch to one of the renderer modules imported through pdf_templates.py.
-    if template == "modern":
-        return render_modern_pdf(cv)
-
-    if template == "classic":
-        return render_classic_pdf(cv)
-
-    if template == "executive":
-        return render_executive_pdf(cv)
-
-    return render_modern_pdf(cv)
+    renderer = {
+        "modern": render_modern_pdf,
+        "classic": render_classic_pdf,
+        "executive": render_executive_pdf,
+    }.get(template, render_modern_pdf)
+    response = renderer(cv)
+    if not user_has_active_subscription(request.user):
+        response = watermark_pdf_response(response)
+    return response
 
 
 @login_required
 def download_cover_letter_pdf(request, id):
     """Render the latest generated cover letter as a downloadable PDF."""
-    if not user_has_active_subscription(request.user):
-        return redirect("subscribe")
-
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     letters = CoverLetter.objects.filter(user=request.user, cv=cv)
@@ -443,6 +429,8 @@ def download_cover_letter_pdf(request, id):
     response = HttpResponse(buffer, content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="cover_letter.pdf"'
 
+    if not user_has_active_subscription(request.user):
+        response = watermark_pdf_response(response)
     return response
 
 
@@ -620,9 +608,6 @@ def cv_detail(request, id):
 @login_required
 def select_pdf_template(request, id):
     """Show premium PDF design choices for an owned CV."""
-    if not user_has_active_subscription(request.user):
-        return redirect("subscribe")
-
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     return render(request, "pdf_templates.html", {"cv": cv})

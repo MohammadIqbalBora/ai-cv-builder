@@ -200,3 +200,55 @@ class TailoredCVReviewTests(TestCase):
         self.client.force_login(other)
         self.assertEqual(self.client.get(reverse("review_tailored_cv", args=[self.source.id])).status_code, 404)
         self.assertEqual(self.client.post(reverse("review_tailored_cv", args=[self.source.id]), {"skills": "Changed"}).status_code, 404)
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+class FreeDocumentTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="free-reader")
+        self.cv = CV.objects.create(user=self.user, full_name="Free Candidate", experience="Work experience")
+        self.letter = CoverLetter.objects.create(user=self.user, cv=self.cv, job_description="Role", content="Dear Hiring Manager,\n" + "Relevant professional experience.\n" * 120)
+        self.client.force_login(self.user)
+
+    def pdf_pages(self, response):
+        from io import BytesIO
+        from pypdf import PdfReader
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        return PdfReader(BytesIO(response.content)).pages
+
+    def test_free_downloads_watermark_every_page_for_every_template(self):
+        for template in ["modern", "classic", "executive", "unknown"]:
+            response = self.client.get(reverse("download_cv_pdf", args=[self.cv.id]), {"template": template, "is_premium": "true"})
+            for page in self.pdf_pages(response):
+                self.assertIn("AI CV Builder - Free Version", page.extract_text())
+        response = self.client.get(reverse("download_cover_letter_pdf", args=[self.cv.id]))
+        pages = self.pdf_pages(response)
+        self.assertGreater(len(pages), 1)
+        for page in pages:
+            self.assertIn("AI CV Builder - Free Version", page.extract_text())
+
+    def test_premium_downloads_have_no_free_watermark(self):
+        Subscription.objects.create(user=self.user, is_active=True, plan_name="Premium")
+        for route in ["download_cv_pdf", "download_cover_letter_pdf"]:
+            for page in self.pdf_pages(self.client.get(reverse(route, args=[self.cv.id]))):
+                self.assertNotIn("AI CV Builder - Free Version", page.extract_text())
+
+    @patch("resumes.views.AIService")
+    def test_free_users_can_generate_letters_and_open_templates(self, ai):
+        ai.return_value.generate_cover_letter.return_value = "A new letter"
+        session = self.client.session
+        session["last_job_description"] = "A new role"
+        session.save()
+        response = self.client.post(reverse("create_cover_letter", args=[self.cv.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(CoverLetter.objects.filter(content="A new letter", user=self.user).exists())
+        self.assertContains(self.client.get(reverse("select_pdf_template", args=[self.cv.id])), "include a watermark")
+        self.assertContains(self.client.get(reverse("cv_preview", args=[self.cv.id])), "free-document")
+        Subscription.objects.create(user=self.user, is_active=True, plan_name="Premium")
+        self.assertNotContains(self.client.get(reverse("cv_preview", args=[self.cv.id])), "free-document")
+
+    def test_downloads_remain_private(self):
+        other = User.objects.create_user(username="another-reader")
+        self.client.force_login(other)
+        for route in ["download_cv_pdf", "download_cover_letter_pdf"]:
+            self.assertEqual(self.client.get(reverse(route, args=[self.cv.id])).status_code, 404)

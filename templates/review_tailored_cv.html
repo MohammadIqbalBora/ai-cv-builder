@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+{% include "includes/free_document_notice.html" %}
 <div class="container py-4">
   <h1>Review your tailored CV</h1>
   <p>{{ cv.full_name }}</p>
@@ -18,11 +19,11 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <h3 class="h6">Original</h3>
-            <div class="border rounded p-3">{% for part in section.before %}{% if part.changed %}<mark>{{ part.text }}</mark>{% else %}{{ part.text }}{% endif %} {% empty %}<span class="text-muted">Empty</span>{% endfor %}</div>
+            <div class="border rounded p-3 {% if watermarked_documents %}free-document{% endif %}">{% for part in section.before %}{% if part.changed %}<mark>{{ part.text }}</mark>{% else %}{{ part.text }}{% endif %} {% empty %}<span class="text-muted">Empty</span>{% endfor %}</div>
           </div>
           <div class="col-md-6">
             <h3 class="h6">Tailored version</h3>
-            <div class="border rounded p-3">{% for part in section.after %}{% if part.changed %}<mark>{{ part.text }}</mark>{% else %}{{ part.text }}{% endif %} {% empty %}<span class="text-muted">Empty</span>{% endfor %}</div>
+            <div class="border rounded p-3 {% if watermarked_documents %}free-document{% endif %}">{% for part in section.after %}{% if part.changed %}<mark>{{ part.text }}</mark>{% else %}{{ part.text }}{% endif %} {% empty %}<span class="text-muted">Empty</span>{% endfor %}</div>
           </div>
         </div>
         {% endif %}

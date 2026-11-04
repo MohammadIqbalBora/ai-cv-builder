@@ -1504,3 +1504,14 @@ footer {
 .sidebar-job-title {
     margin-top: 4px;
 }
+
+
+.free-document { position: relative; isolation: isolate; }
+.free-document::after {
+    content: "AI CV Builder - Free Version";
+    position: absolute;
+    top: 45%; left: 0; width: 100%; text-align: center;
+    font-size: clamp(1.2rem, 3vw, 2.8rem); font-weight: 700;
+    color: rgba(60, 75, 100, 0.25);
+    transform: rotate(-25deg); pointer-events: none; z-index: 2;
+}

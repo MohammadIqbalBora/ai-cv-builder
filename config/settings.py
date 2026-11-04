@@ -117,6 +117,7 @@ TEMPLATES = [
             "context_processors": [
                 # Expose the current request as `request`.
                 "django.template.context_processors.request",
+                "resumes.context_processors.document_access",
                 # Expose `user` and permission information.
                 "django.contrib.auth.context_processors.auth",
                 # Expose one-time messages created by views.

@@ -4,6 +4,7 @@
 {% extends 'base.html' %} 
 
 {% block content %}
+{% include "includes/free_document_notice.html" %}
 
 <div class="ai-page">
   <div class="ai-header mb-5">
@@ -73,7 +74,7 @@
           </p>
 
           {% if improved_cv %}
-          <div class="ai-output">
+          <div class="ai-output {% if watermarked_documents %}free-document{% endif %}">
             <pre>{{ improved_cv }}</pre>
           </div>
           {% else %}

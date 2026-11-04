@@ -2,6 +2,7 @@
 {# Connection: resumes.views.create_cover_letter supplies job context and generated text stored in the database. #}
 
 {% extends 'base.html' %} {% block content %}
+{% include "includes/free_document_notice.html" %}
 
 <div class="cover-page">
   <div class="cover-header mb-5">
@@ -53,7 +54,7 @@
       <hr class="my-4" />
 
       {% if cover_letter %}
-      <div class="letter-output">
+      <div class="letter-output {% if watermarked_documents %}free-document{% endif %}">
         <pre>{{ cover_letter }}</pre>
       </div>
       {% else %}

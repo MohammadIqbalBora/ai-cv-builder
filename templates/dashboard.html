@@ -58,7 +58,7 @@
     {% if not is_premium %}
     <div class="sidebar-premium">
       <h5>Upgrade to Premium</h5>
-      <p>Unlock AI, cover letters and PDF export.</p>
+      <p>Remove watermarks from CVs and cover letters.</p>
       <a href="{% url 'pricing' %}" class="btn btn-outline-primary w-100">
         Upgrade Now
       </a>
@@ -81,7 +81,7 @@
 
     
 
-    <section class="dashboard-preview-card">
+    <section class="dashboard-preview-card {% if watermarked_documents %}free-document{% endif %}">
       <div class="preview-top">
         <div>
           <h2>{{ selected_cv.full_name }}</h2>

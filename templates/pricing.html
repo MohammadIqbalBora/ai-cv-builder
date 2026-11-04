@@ -28,16 +28,17 @@
     {% elif is_premium and subscription.stripe_subscription_id %}
     <p class="text-center"><a href="{% url 'cancel_subscription' %}" class="btn btn-outline-secondary">Cancel subscription</a></p>
     {% endif %}
-    <div class="row g-5 justify-content-center">
+    <div class="row g-4 justify-content-center pricing-plans">
 
         <!-- FREE -->
 
-        <div class="col-lg-4">
+        <div class="col-lg-4 d-flex">
 
             <div class="card h-100 pricing-card">
 
                 <div class="card-body">
 
+                    <span class="badge bg-secondary mb-3 align-self-start">Get started</span>
                     <h2 class="fw-bold">
                         Free
                     </h2>
@@ -67,6 +68,9 @@
                         <li class="list-group-item">3 PDF downloads total across CVs and cover letters (watermarked)</li>
 
                     </ul>
+                    <div class="plan-action">
+                      <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-lg w-100">Go to Dashboard</a>
+                    </div>
 
                 </div>
 
@@ -74,11 +78,11 @@
 
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-4 d-flex">
           <div class="card h-100 pricing-card"><div class="card-body">
             <span class="badge bg-info text-dark mb-3">One-off payment</span>
             <h2 class="fw-bold">Job Application Pack</h2>
-            <p class="display-3">&pound;1.99 <small class="fs-4">one-off</small></p>
+            <p class="display-3 plan-price">&pound;1.99 <small class="fs-4">one-off</small></p>
             <p>No subscription or automatic renewal.</p>
             <ul class="list-group list-group-flush">
               <li class="list-group-item">3 watermark-free CV PDF downloads</li>
@@ -88,16 +92,20 @@
             </ul>
             <p class="small text-muted mt-3">Each download counts, including repeats. Pack credits are used before free downloads. The three-saved-CV limit still applies without Premium. Buy another pack whenever you need more downloads.</p>
             <p>Remaining pack downloads: {{ pack_cv_credits }} CVs and {{ pack_letter_credits }} cover letters.</p>
-            {% if not is_premium %}
-            <form method="post" action="{% url 'buy_application_pack' %}">{% csrf_token %}<button class="btn btn-primary w-100" type="submit">Buy Application Pack &ndash; &pound;1.99</button></form>
-            {% else %}<p class="text-success">Your Premium plan already includes unlimited downloads.</p>{% endif %}
+            {% if is_premium %}<p class="small text-success">Premium already includes unlimited downloads. Any pack credits you buy remain available after Premium ends.</p>{% endif %}
+            <div class="plan-action">
+              <form method="post" action="{% url 'buy_application_pack' %}">
+                {% csrf_token %}
+                <button class="btn btn-primary btn-lg w-100" type="submit">Buy Application Pack &ndash; &pound;1.99</button>
+              </form>
+            </div>
           </div></div>
         </div>
         <!-- PREMIUM -->
 
-        <div class="col-lg-4">
+        <div class="col-lg-4 d-flex">
 
-            <div class="card border-primary shadow-lg pricing-card">
+            <div class="card h-100 border-primary shadow-lg pricing-card">
 
                 <div class="card-body">
 
@@ -136,7 +144,7 @@
 
                     </ul>
 
-                    <div class="mt-4">
+                    <div class="plan-action">
 
                         {% if is_premium %}
 

@@ -1516,3 +1516,16 @@ footer {
     color: rgba(60, 75, 100, 0.25);
     transform: rotate(-25deg); pointer-events: none; z-index: 2;
 }
+
+
+.pricing-plans .pricing-card { width: 100%; }
+.pricing-plans .pricing-card .card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+.pricing-plans .pricing-card .badge { align-self: flex-start; }
+.pricing-plans .pricing-card .plan-price,
+.pricing-plans .pricing-card h1 { font-size: 46px; }
+.pricing-plans .plan-action { margin-top: auto; padding-top: 24px; }
+.pricing-plans .plan-action .btn { min-height: 58px; }

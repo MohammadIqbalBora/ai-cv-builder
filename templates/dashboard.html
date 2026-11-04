@@ -40,6 +40,7 @@
         </div>
         <div>
           <strong>{{ cv.full_name|truncatechars:24 }}</strong>
+          <span>CV #{{ cv.id }} &middot; {{ cv.created_at|date:"j M Y" }}</span>
 
           {% if "Tailored CV" in cv.full_name %}
           <span class="tailored-badge">

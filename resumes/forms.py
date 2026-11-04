@@ -93,6 +93,11 @@ class JobAlertForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["cv"].queryset = CV.objects.filter(user=user).order_by("-created_at")
         self.fields["cv"].required = True
+        self.fields["cv"].empty_label = "Choose a CV"
+        self.fields["cv"].label_from_instance = lambda cv: (
+            f"{cv.full_name} | {cv.job_title or 'No job title'} | "
+            f"{cv.created_at:%d %b %Y} | CV #{cv.pk}"
+        )
         for name, field in self.fields.items():
             if name != "enabled":
                 field.widget.attrs["class"] = "form-control"

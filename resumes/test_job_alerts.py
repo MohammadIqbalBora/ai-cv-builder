@@ -242,3 +242,17 @@ class JobAlertTests(TestCase):
         self.assertIsNone(self.pref.last_sent_at)
         self.assertIsNone(self.pref.last_checked_at)
         self.assertFalse(SentJobAlert.objects.exists())
+
+
+    def test_same_name_cvs_have_distinct_labels_and_selected_id_is_saved(self):
+        from .forms import JobAlertForm
+        second = CV.objects.create(user=self.user, full_name=self.cv.full_name, job_title="Plumber", skills="Pipework")
+        form = JobAlertForm(user=self.user)
+        options = dict(form.fields["cv"].choices)
+        # ModelChoice values wrap the database PK while the labels distinguish copies.
+        labels = [str(label) for label in options.values()]
+        self.assertTrue(any("English Teacher" in label and f"CV #{self.cv.pk}" in label for label in labels))
+        self.assertTrue(any("Plumber" in label and f"CV #{second.pk}" in label for label in labels))
+        self.client.post(reverse("job_alert_preferences"), self.form_data(cv=second.pk))
+        self.pref.refresh_from_db()
+        self.assertEqual(self.pref.cv_id, second.pk)

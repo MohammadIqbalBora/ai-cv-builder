@@ -102,3 +102,10 @@ class CoverLetter(models.Model):
 
     def __str__(self):
         return f"Cover letter for {self.cv.full_name}"
+
+
+class FreeDownloadUsage(models.Model):
+    """Lifetime free PDF allowance, independent of saved documents."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    downloads = models.PositiveIntegerField(default=0)

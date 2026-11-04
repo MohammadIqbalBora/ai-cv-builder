@@ -33,7 +33,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from .ai_service import AIService
 from .cv_parser import extract_text_from_cv, parse_cv_text
 from .forms import CVForm, TailoredCVReviewForm
-from .models import CV, CoverLetter, Subscription
+from .models import CV, CoverLetter, Subscription, FreeDownloadUsage
 from .watermarks import watermark_pdf_response
 from .pdf_templates import (
     render_classic_pdf,
@@ -389,7 +389,32 @@ Experience: {cv.experience}
     )
 
 
+def enforce_download_limit(view):
+    from functools import wraps
+    from django.db import transaction
+
+    @wraps(view)
+    def wrapped(request, id):
+        # Reject unowned documents before checking or consuming the allowance.
+        get_object_or_404(CV, id=id, user=request.user)
+        with transaction.atomic():
+            get_user_model().objects.select_for_update().get(pk=request.user.pk)
+            premium = user_has_active_subscription(request.user)
+            usage = None
+            if not premium:
+                usage, _ = FreeDownloadUsage.objects.get_or_create(user=request.user)
+                if usage.downloads >= 3:
+                    return render(request, "download_limit.html", status=403)
+            response = view(request, id)
+            if usage is not None and response.status_code == 200 and response.get("Content-Type") == "application/pdf":
+                usage.downloads += 1
+                usage.save(update_fields=["downloads"])
+            return response
+    return wrapped
+
+
 @login_required
+@enforce_download_limit
 def download_cv_pdf(request, id):
     """Return the selected CV as a downloadable PDF based on the chosen template."""
     cv = get_object_or_404(CV, id=id, user=request.user)
@@ -409,6 +434,7 @@ def download_cv_pdf(request, id):
 
 
 @login_required
+@enforce_download_limit
 def download_cover_letter_pdf(request, id):
     """Render the latest generated cover letter as a downloadable PDF."""
     cv = get_object_or_404(CV, id=id, user=request.user)

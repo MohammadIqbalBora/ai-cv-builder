@@ -1,3 +1,3 @@
 {% if watermarked_documents %}
-<div class="alert alert-info my-3">You are using the Free plan. Document previews and PDF downloads include a watermark. <a href="{% url 'pricing' %}">Upgrade to Premium</a> for watermark-free documents.</div>
+<div class="alert alert-info my-3">You are using the Free plan. Document previews and PDF downloads include a watermark. You have {{ free_downloads_remaining }} of 3 free PDF downloads remaining, shared between CVs and cover letters. Repeat downloads also count. <a href="{% url 'pricing' %}">Upgrade to Premium</a> for watermark-free documents.</div>
 {% endif %}

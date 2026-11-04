@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import CV, CoverLetter, Subscription
+from .models import CV, CoverLetter, Subscription, FreeDownloadUsage
 
 
 @override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
@@ -218,9 +218,11 @@ class FreeDocumentTests(TestCase):
 
     def test_free_downloads_watermark_every_page_for_every_template(self):
         for template in ["modern", "classic", "executive", "unknown"]:
+            FreeDownloadUsage.objects.filter(user=self.user).delete()
             response = self.client.get(reverse("download_cv_pdf", args=[self.cv.id]), {"template": template, "is_premium": "true"})
             for page in self.pdf_pages(response):
                 self.assertIn("AI CV Builder - Free Version", page.extract_text())
+        FreeDownloadUsage.objects.filter(user=self.user).delete()
         response = self.client.get(reverse("download_cover_letter_pdf", args=[self.cv.id]))
         pages = self.pdf_pages(response)
         self.assertGreater(len(pages), 1)
@@ -291,3 +293,38 @@ class FreeCVLimitTests(TestCase):
         for route in ["edit_cv", "download_cv_pdf"]:
             self.assertEqual(self.client.get(reverse(route, args=[self.cvs[0].id])).status_code, 200)
         self.assertEqual(self.client.get(reverse("create_cv")).status_code, 403)
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+class DownloadLimitTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="download-limit")
+        self.client.force_login(self.user)
+        self.cv = CV.objects.create(user=self.user, full_name="Example")
+        CoverLetter.objects.create(user=self.user, cv=self.cv, content="Letter", job_description="Role")
+
+    def test_three_combined_downloads_then_repeat_is_blocked(self):
+        for route in ["download_cv_pdf", "download_cover_letter_pdf", "download_cv_pdf"]:
+            self.assertEqual(self.client.get(reverse(route, args=[self.cv.id])).status_code, 200)
+        self.client.logout()
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("download_cover_letter_pdf", args=[self.cv.id]))
+        self.assertContains(response, "Free download limit reached", status_code=403)
+        self.assertEqual(FreeDownloadUsage.objects.get(user=self.user).downloads, 3)
+        self.cv.delete()
+        replacement = CV.objects.create(user=self.user, full_name="Replacement")
+        self.assertEqual(self.client.get(reverse("download_cv_pdf", args=[replacement.id])).status_code, 403)
+
+    def test_missing_letter_redirect_does_not_consume_allowance(self):
+        CoverLetter.objects.all().delete()
+        self.assertEqual(self.client.get(reverse("download_cover_letter_pdf", args=[self.cv.id])).status_code, 302)
+        self.assertEqual(FreeDownloadUsage.objects.get(user=self.user).downloads, 0)
+
+    def test_premium_bypasses_exhausted_allowance(self):
+        FreeDownloadUsage.objects.create(user=self.user, downloads=3)
+        sub = Subscription.objects.create(user=self.user, is_active=True, plan_name="Premium")
+        for _ in range(4):
+            self.assertEqual(self.client.get(reverse("download_cv_pdf", args=[self.cv.id])).status_code, 200)
+        self.assertEqual(FreeDownloadUsage.objects.get(user=self.user).downloads, 3)
+        sub.is_active = False
+        sub.save()
+        self.assertEqual(self.client.get(reverse("download_cv_pdf", args=[self.cv.id])).status_code, 403)

@@ -20,6 +20,8 @@
         PDF.
       </p>
 
+      <a href="#how-to-use" class="btn btn-outline-light btn-lg mb-3">How to use this site</a>
+
       {% if user.is_authenticated %}
       <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg me-2">
         Go to Dashboard
@@ -88,6 +90,60 @@
       </div>
     </div>
   </div>
+</section>
+
+
+<section id="how-to-use" class="my-5" aria-labelledby="how-to-use-heading">
+  <h2 id="how-to-use-heading" class="fw-bold">How to use this site</h2>
+  <p class="text-muted mb-4">Follow these steps to build an application for your trade or profession.</p>
+  <ol class="row g-4 list-unstyled">
+    <li class="col-md-6 col-lg-4">
+      <div class="card h-100 feature-card"><div class="card-body">
+        <span class="badge bg-primary mb-3">Step 1</span>
+        <h3 class="h4">Create your account</h3>
+        <p>Choose <strong>Start Free</strong> to register, or <strong>Login</strong> if you already have an account. Your dashboard keeps your saved CVs and cover letters together.</p>
+      </div></div>
+    </li>
+    <li class="col-md-6 col-lg-4">
+      <div class="card h-100 feature-card"><div class="card-body">
+        <span class="badge bg-primary mb-3">Step 2</span>
+        <h3 class="h4">Add your CV</h3>
+        <p>Select <strong>Create CV</strong> and enter your details, skills, experience and education. Or upload a text-based PDF or Word (.docx) file and select <strong>Import &amp; Fill CV Fields</strong>. Check the imported details, then click <strong>Save CV</strong>.</p>
+      </div></div>
+    </li>
+    <li class="col-md-6 col-lg-4">
+      <div class="card h-100 feature-card"><div class="card-body">
+        <span class="badge bg-primary mb-3">Step 3</span>
+        <h3 class="h4">Match a job</h3>
+        <p>Select a CV from your dashboard and click <strong>Job Match</strong>. Paste or upload the job description, then choose <strong>Analyse Job Against This CV</strong> to see matching skills, gaps and suggestions.</p>
+      </div></div>
+    </li>
+    <li class="col-md-6 col-lg-4">
+      <div class="card h-100 feature-card"><div class="card-body">
+        <span class="badge bg-primary mb-3">Step 4</span>
+        <h3 class="h4">Tailor, review and edit</h3>
+        <p>Click <strong>Tailor My CV</strong> to create a separate version for the job. Review the highlighted changes and edit the <strong>New CV</strong> fields. Choose <strong>Use original text</strong> to reject a section?s changes, then click <strong>Save reviewed CV</strong>. Your original CV stays unchanged.</p>
+      </div></div>
+    </li>
+    <li class="col-md-6 col-lg-4">
+      <div class="card h-100 feature-card"><div class="card-body">
+        <span class="badge bg-primary mb-3">Step 5</span>
+        <h3 class="h4">Generate a cover letter</h3>
+        <p>After analysing the job description, return to the dashboard, select the CV you want to use and click <strong>Cover Letter</strong>, then <strong>Generate Cover Letter</strong>. It uses your latest analysed job description and is saved under <strong>My Cover Letters</strong>.</p>
+      </div></div>
+    </li>
+    <li class="col-md-6 col-lg-4">
+      <div class="card h-100 feature-card"><div class="card-body">
+        <span class="badge bg-primary mb-3">Step 6</span>
+        <h3 class="h4">Download and apply</h3>
+        <p>On the dashboard, select your CV and click <strong>Choose PDF Template</strong>. Choose Modern, Classic or Executive to download a PDF. Open a saved cover letter to download its PDF too. Always check your documents before sending them.</p>
+      </div></div>
+    </li>
+  </ol>
+  <div class="alert alert-info mt-4">
+    <strong>Premium features:</strong> Cover-letter generation and PDF downloads require an active Premium subscription. See <a href="{% url 'pricing' %}">Premium plans</a> for details.
+  </div>
+  <p class="text-muted">You can return to the dashboard to edit your CVs or reopen <strong>Review changes</strong> on a newly tailored CV.</p>
 </section>
 
 {% endblock %}

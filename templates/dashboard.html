@@ -118,6 +118,9 @@
       </div>
 
       <div class="dashboard-toolbar">
+        {% if selected_cv.original_content %}
+        <a href="{% url 'review_tailored_cv' selected_cv.id %}" class="btn btn-outline-primary btn-sm">Review changes</a>
+        {% endif %}
         {% if selected_cv.uploaded_file %}
         <a
           href="{{ selected_cv.uploaded_file.url }}"

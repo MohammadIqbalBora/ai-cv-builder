@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1>Review your tailored CV</h1>
+  <p>{{ cv.full_name }}</p>
+  <p>Compare the changes from Job Match, then edit the fields below and save your CV. Your original CV is unchanged.</p>
+  <p><mark>Highlighted text</mark> shows wording removed from the original or added to this CV.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for section in sections %}
+    <section class="card mb-4 {% if section.changed %}border-primary{% endif %}">
+      <div class="card-body">
+        <h2 class="h4">{{ section.field.label }} {% if section.changed %}<span class="badge bg-primary">Changed</span>{% else %}<span class="badge bg-secondary">Unchanged</span>{% endif %}</h2>
+        {% if section.changed %}
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <h3 class="h6">Original</h3>
+            <div class="border rounded p-3">{% for part in section.before %}{% if part.changed %}<mark>{{ part.text }}</mark>{% else %}{{ part.text }}{% endif %} {% empty %}<span class="text-muted">Empty</span>{% endfor %}</div>
+          </div>
+          <div class="col-md-6">
+            <h3 class="h6">Tailored version</h3>
+            <div class="border rounded p-3">{% for part in section.after %}{% if part.changed %}<mark>{{ part.text }}</mark>{% else %}{{ part.text }}{% endif %} {% empty %}<span class="text-muted">Empty</span>{% endfor %}</div>
+          </div>
+        </div>
+        {% endif %}
+        <label for="{{ section.field.id_for_label }}" class="form-label">Edit {{ section.field.label|lower }}</label>
+        {{ section.field.errors }}
+        {{ section.field }}
+      </div>
+    </section>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Save reviewed CV</button>
+    <a href="{% url 'dashboard' %}?cv={{ cv.id }}" class="btn btn-outline-secondary">Back to dashboard</a>
+  </form>
+</div>
+{% endblock %}

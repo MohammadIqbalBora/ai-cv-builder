@@ -57,3 +57,18 @@ class CVForm(forms.ModelForm):
         # Look up each generated field by name and allow it to be empty.
         for field in optional_fields:
             self.fields[field].required = False
+
+
+class TailoredCVReviewForm(forms.ModelForm):
+    """Editable sections rewritten by Job Match."""
+
+    class Meta:
+        model = CV
+        fields = ["job_title", "professional_summary", "skills", "experience", "education"]
+        widgets = {"job_title": forms.TextInput(attrs={"class": "form-control"})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in self.fields:
+            if name != "job_title":
+                self.fields[name].widget = forms.Textarea(attrs={"class": "form-control", "rows": 8})

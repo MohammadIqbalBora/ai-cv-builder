@@ -163,3 +163,40 @@ class CVUploadTests(TestCase):
         response = self.client.post(reverse("create_cv"), {"action": "import", "uploaded_file": SimpleUploadedFile("plumber.pdf", buffer.getvalue())})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(CV.objects.get().job_title, "Plumber")
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+class TailoredCVReviewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="review-owner")
+        self.client.force_login(self.user)
+        self.source = CV.objects.create(user=self.user, full_name="Alex", job_title="Teacher", skills="Lesson planning", experience="Taught English")
+
+    @patch("resumes.views.AIService")
+    def test_tailoring_redirects_to_editable_comparison_and_preserves_source(self, ai):
+        ai.return_value.tailor_cv_to_job.return_value = {"job_title": "English Teacher", "skills": "Lesson planning and assessment"}
+        response = self.client.post(reverse("tailor_cv_to_job", args=[self.source.id]), {"job_description": "English teacher"})
+        tailored = CV.objects.exclude(id=self.source.id).get()
+        self.assertRedirects(response, reverse("review_tailored_cv", args=[tailored.id]))
+        self.assertEqual(tailored.original_content["skills"], "Lesson planning")
+        response = self.client.get(reverse("review_tailored_cv", args=[tailored.id]))
+        self.assertContains(response, "<mark>and assessment</mark>", html=True)
+        self.assertContains(response, "Unchanged")
+        response = self.client.post(reverse("review_tailored_cv", args=[tailored.id]), {"job_title": "English Teacher", "skills": "My corrected skills", "experience": "Taught English"})
+        self.assertRedirects(response, reverse("dashboard"))
+        tailored.refresh_from_db()
+        self.source.refresh_from_db()
+        self.assertEqual(tailored.skills, "My corrected skills")
+        self.assertEqual(self.source.skills, "Lesson planning")
+        self.assertEqual(tailored.original_content["skills"], "Lesson planning")
+
+    def test_review_is_private_and_comparison_escapes_html(self):
+        self.source.original_content = {"skills": "<script>alert(1)</script>"}
+        self.source.skills = "<img src=x onerror=alert(1)>"
+        self.source.save()
+        response = self.client.get(reverse("review_tailored_cv", args=[self.source.id]))
+        self.assertNotContains(response, "<script>alert(1)</script>")
+        self.assertNotContains(response, "<img src=x onerror=alert(1)>")
+        other = User.objects.create_user(username="other-reviewer")
+        self.client.force_login(other)
+        self.assertEqual(self.client.get(reverse("review_tailored_cv", args=[self.source.id])).status_code, 404)
+        self.assertEqual(self.client.post(reverse("review_tailored_cv", args=[self.source.id]), {"skills": "Changed"}).status_code, 404)

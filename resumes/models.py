@@ -46,6 +46,8 @@ class CV(models.Model):
         default="modern",
     )
 
+    original_content = models.JSONField(default=dict, blank=True)
+
     # Record the creation time once, when Django first inserts the row.
     created_at = models.DateTimeField(auto_now_add=True)
 

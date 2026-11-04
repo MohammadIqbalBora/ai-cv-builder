@@ -32,7 +32,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 # Import local business logic, parsing, forms, database models, and PDF designs.
 from .ai_service import AIService
 from .cv_parser import extract_text_from_cv, parse_cv_text
-from .forms import CVForm
+from .forms import CVForm, TailoredCVReviewForm
 from .models import CV, CoverLetter, Subscription
 from .pdf_templates import (
     render_classic_pdf,
@@ -739,7 +739,7 @@ Education: {cv.education}
 
         # Insert a separate CV, preserving contact details and falling back to
         # original sections whenever the AI omits a value.
-        CV.objects.create(
+        tailored_cv = CV.objects.create(
             user=request.user,
             full_name=f"{base_name} - Tailored CV",
             email=cv.email,
@@ -752,8 +752,37 @@ Education: {cv.education}
             experience=tailored_data.get("experience") or cv.experience,
             education=tailored_data.get("education") or cv.education,
             template=cv.template,
+            original_content={name: getattr(cv, name) or "" for name in TailoredCVReviewForm.Meta.fields},
         )
 
-        return redirect("dashboard")
+        return redirect("review_tailored_cv", id=tailored_cv.id)
 
     return redirect("job_match", id=cv.id)
+
+
+@login_required
+def review_tailored_cv(request, id):
+    """Compare a tailored CV with its source snapshot and allow corrections."""
+    from difflib import SequenceMatcher
+
+    cv = get_object_or_404(CV, id=id, user=request.user)
+    if not cv.original_content:
+        return redirect("edit_cv", id=cv.id)
+    form = TailoredCVReviewForm(request.POST or None, instance=cv)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect("dashboard")
+
+    sections = []
+    for field in form:
+        original = cv.original_content.get(field.name, "") or ""
+        current = str(field.value() or "")
+        before, after = [], []
+        old_words, new_words = original.split(), current.split()
+        for tag, i, j, k, l in SequenceMatcher(None, old_words, new_words, autojunk=False).get_opcodes():
+            if i != j:
+                before.append({"text": " ".join(old_words[i:j]), "changed": tag != "equal"})
+            if k != l:
+                after.append({"text": " ".join(new_words[k:l]), "changed": tag != "equal"})
+        sections.append({"field": field, "changed": original != current, "before": before, "after": after})
+    return render(request, "review_tailored_cv.html", {"cv": cv, "form": form, "sections": sections})

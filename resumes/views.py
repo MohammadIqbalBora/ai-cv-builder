@@ -515,6 +515,7 @@ def cancel_subscription(request):
                 cancel_at_period_end=True,
                 api_key=settings.STRIPE_SECRET_KEY,
             )
+            remote = remote.to_dict()
             end = remote.get("cancel_at") or remote.get("current_period_end")
             if not end:
                 ends = [item.get("current_period_end") for item in remote.get("items", {}).get("data", []) if item.get("current_period_end")]

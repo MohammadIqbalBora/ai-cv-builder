@@ -342,7 +342,8 @@ class CancelSubscriptionTests(TestCase):
 
     @patch("resumes.views.stripe.Subscription.modify")
     def test_confirmation_then_cancellation_keeps_account_and_access(self, modify):
-        modify.return_value = {"cancel_at": int(self.end.timestamp())}
+        import stripe
+        modify.return_value = stripe.Subscription.construct_from({"cancel_at": int(self.end.timestamp())}, "test-key")
         self.assertContains(self.client.get(reverse("cancel_subscription")), "Confirm cancellation")
         modify.assert_not_called()
         self.assertRedirects(self.client.post(reverse("cancel_subscription")), reverse("pricing"))
@@ -379,3 +380,16 @@ class CancelSubscriptionTests(TestCase):
         self.client.force_login(other)
         self.client.post(reverse("cancel_subscription"), {"subscription_id": "sub_own"})
         modify.assert_not_called()
+
+
+    @patch("resumes.views.stripe.Subscription.modify")
+    def test_stripe_item_period_end_is_supported(self, modify):
+        import stripe
+        modify.return_value = stripe.Subscription.construct_from({
+            "cancel_at": None,
+            "items": {"data": [{"current_period_end": int(self.end.timestamp())}]},
+        }, "test-key")
+        self.assertRedirects(self.client.post(reverse("cancel_subscription")), reverse("pricing"))
+        self.sub.refresh_from_db()
+        self.assertTrue(self.sub.cancel_at_period_end)
+        self.assertEqual(int(self.sub.premium_until.timestamp()), int(self.end.timestamp()))

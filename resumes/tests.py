@@ -68,3 +68,34 @@ class SavedCoverLetterTests(TestCase):
         session.save()
         self.client.get(reverse("dashboard"))
         self.assertFalse(CoverLetter.objects.exists())
+
+class ProfessionAwarePromptTests(TestCase):
+    @patch("resumes.ai_service.OpenAI")
+    def test_teacher_tailoring_uses_target_profession_and_preserves_evidence(self, client):
+        from resumes.ai_service import AIService
+
+        client.return_value.chat.completions.create.return_value.choices[0].message.content = (
+            '{"job_title":"English Teacher","skills":"Lesson planning"}'
+        )
+        source = "English Teacher at Example School, 2022-2025. PGCE. Lesson planning."
+        target = "English teacher teaching literature and assessing pupil progress."
+        result = AIService().tailor_cv_to_job(source, target)
+        prompt = client.return_value.chat.completions.create.call_args.kwargs["messages"][1]["content"]
+        self.assertIn(source, prompt)
+        self.assertIn(target, prompt)
+        self.assertIn("target profession", prompt)
+        self.assertIn("Missing qualifications", prompt)
+        self.assertNotIn("Emphasise transferable skills from IT support", prompt)
+        self.assertNotIn("The candidate has only listed Full Stack", prompt)
+        self.assertEqual(result["job_title"], "English Teacher")
+
+    @patch("resumes.ai_service.OpenAI")
+    def test_import_does_not_supply_an_it_skills_template(self, client):
+        from resumes.ai_service import AIService
+
+        client.return_value.chat.completions.create.return_value.choices[0].message.content = '{}'
+        AIService().parse_uploaded_cv("English teacher with a PGCE")
+        prompt = client.return_value.chat.completions.create.call_args.kwargs["messages"][1]["content"]
+        self.assertIn("candidate's own profession", prompt)
+        self.assertNotIn("Red Hat 7", prompt)
+        self.assertNotIn("HP Servers", prompt)

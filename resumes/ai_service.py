@@ -231,19 +231,12 @@ professional_summary:
 Write 2-3 strong sentences based on the candidate's background.
 
 skills:
-Group skills clearly like this:
-Operating Systems:
-• Red Hat 7
-• Solaris 7-10
-
-Hardware:
-• HP Servers
-• Dell Hardware
-
-Tools:
-• VMware
-• ITIL
-• CMDB
+Group skills under headings appropriate to the candidate's own profession.
+Choose categories from evidence in the CV, rather than using a fixed industry template.
+For an English teacher, relevant categories may include English Language and Literature,
+Lesson Planning, Assessment, Classroom Management and Inclusive Teaching, but include
+these only when supported by the supplied CV. For other professions, use their own
+relevant skill categories. Do not introduce IT skills unless the CV contains them.
 
 experience:
 Use this format for each role:
@@ -348,15 +341,18 @@ Rules:
 Tailor the candidate's CV specifically for the job description.
 
 Your task:
-1. Read the job description carefully.
-2. Identify the most important required skills, technologies, responsibilities and keywords.
-3. Read the candidate CV.
-4. Rewrite the CV so the most relevant existing experience is highlighted.
-5. Emphasise transferable skills from IT support, infrastructure, data centre and deployment work.
-6. Highlight software development training, web development skills, Agile exposure, documentation, troubleshooting and technical collaboration where truthful.
-7. Use job description keywords only where they honestly match the candidate's background.
-8. Do not invent commercial experience with technologies the candidate has only studied.
-9. Do not invent jobs, employers, dates, qualifications or achievements.
+1. Identify the target profession, sector, responsibilities and selection criteria from the job description.
+2. Read the candidate CV as the sole evidence of their background.
+3. Highlight existing experience and transferable skills relevant to that profession.
+4. Use the terminology and priorities of the target role, without defaulting to IT or software development.
+5. For an English teacher role, prioritise evidence of language/literature teaching, lesson planning,
+   assessment and feedback, classroom management, inclusion and pupil progress where present.
+   Retain supplied age groups, curricula and teaching qualifications accurately; do not assume them.
+6. For any other profession, identify that role's own priorities instead of applying teaching categories.
+7. Distinguish formal employment, placements, volunteering and training accurately.
+8. Do not invent jobs, employers, dates, qualifications, skills or achievements.
+9. If the candidate is changing careers, present relevant transferable evidence honestly;
+   do not describe them as an experienced practitioner in a profession they have not worked in.
 
 Return JSON only with these exact keys:
 
@@ -373,17 +369,13 @@ Rules:
 - Skills should be grouped clearly.
 - Experience must keep the original companies, job titles and dates.
 - Rewrite bullet points so they show transferable value for this job.
-- Put software development, web development and relevant technical skills higher in the skills section.
-- Keep infrastructure skills if they support the job application, but do not let them dominate the CV.
-- Education should highlight relevant software/web development courses first.
+- Order skills and education by relevance to the target profession, using only supplied evidence.
 - Keep the CV truthful and suitable for a UK job application.
-- Do not copy skills from the job description into the CV unless they clearly appear in the candidate CV.
-- If a skill only appears in the job description, treat it as a missing skill and do not add it to the tailored CV.
-- The candidate has only listed Full Stack Web Development training, so do not claim professional experience in C#, Angular, ASP.NET Core, Azure, APIs or Scrum unless those appear in the original CV.
-- You may mention these as learning goals only if appropriate, but not as existing skills or experience.
-- Do not list SQL, C#, Angular, ASP.NET Core, Azure, REST APIs, OAuth, JWT, NodeJS or cloud APIs unless they clearly appear in the candidate CV.
-- Full Stack Web Development training may support HTML, CSS and JavaScript only if they are presented as training-based skills, not commercial experience.
-- Do not assume SQL or any database technology from the phrase Full Stack Web Development.
+- Preserve all original qualifications, employers, job titles and dates.
+- Do not copy job requirements into the CV as existing skills unless supported by the candidate CV.
+- Missing qualifications, registrations or subject knowledge must not be invented.
+- Do not infer specific technologies, curricula, certifications or professional experience from a course title.
+- Do not add numerical outcomes, exam results or performance claims absent from the original CV.
 
 Experience format:
 
@@ -435,8 +427,11 @@ Job Description:
     def _build_cv_prompt(self, cv_text, template):
         """Create a simple prompt for AI CV improvement."""
         return f"""
-Improve this CV professionally.
-Use clear sections and bullet points.
+Improve this CV professionally for the profession indicated by the candidate's job title
+and experience. Use clear UK CV sections and bullet points, with skill categories and
+language appropriate to that profession. Do not default to IT or technical skills.
+Preserve the candidate's employers, roles, dates and qualifications. Do not invent
+skills, achievements or numerical results. Distinguish training from work experience.
 
 CV:
 {cv_text}
@@ -472,7 +467,7 @@ Dear Hiring Manager,
 
 • Use information from the CV to explain why the candidate is suitable.
 
-• Mention the candidate's strongest technical skills that match the job description.
+• Mention the candidate's strongest evidenced professional and transferable skills that match the target role. Use language appropriate to that profession, without defaulting to technical skills.
 
 • Mention achievements where appropriate.
 

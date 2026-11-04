@@ -47,7 +47,7 @@ def extract_text_from_docx(file_path):
 def extract_text_from_cv(file_path):
     """Choose the correct extractor based on the uploaded CV extension."""
     # Normalize case so `.PDF` and `.pdf` use the same branch.
-    file_extension = Path(file_path).suffix.lower()
+    file_extension = Path(file_path if isinstance(file_path, (str, Path)) else file_path.name).suffix.lower()
 
     if file_extension == ".pdf":
         return extract_text_from_pdf(file_path)

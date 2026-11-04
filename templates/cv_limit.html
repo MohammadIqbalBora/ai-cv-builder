@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5 text-center">
+  <h1>Free plan CV limit reached</h1>
+  <p>Your Free plan includes up to three saved CVs. Uploaded CVs and copies created through Job Match count towards this limit.</p>
+  <p>You can still view, edit and download your existing documents. Delete a CV from your dashboard to make room, or upgrade to Premium for unlimited CVs.</p>
+  <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">Go to dashboard</a>
+  <a href="{% url 'pricing' %}" class="btn btn-primary">Upgrade to Premium</a>
+</div>
+{% endblock %}

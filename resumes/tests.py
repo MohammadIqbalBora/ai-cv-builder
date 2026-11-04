@@ -252,3 +252,42 @@ class FreeDocumentTests(TestCase):
         self.client.force_login(other)
         for route in ["download_cv_pdf", "download_cover_letter_pdf"]:
             self.assertEqual(self.client.get(reverse(route, args=[self.cv.id])).status_code, 404)
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}})
+class FreeCVLimitTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="limited-user")
+        self.client.force_login(self.user)
+        self.cvs = [CV.objects.create(user=self.user, full_name=f"CV {i}") for i in range(3)]
+
+    @patch("resumes.views.AIService")
+    def test_limit_blocks_manual_upload_and_tailoring_before_ai(self, ai):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        attempts = [
+            (reverse("create_cv"), {"full_name": "Fourth"}),
+            (reverse("create_cv"), {"action": "import", "uploaded_file": SimpleUploadedFile("cv.pdf", b"example")}),
+            (reverse("tailor_cv_to_job", args=[self.cvs[0].id]), {"job_description": "Role"}),
+        ]
+        for url, data in attempts:
+            response = self.client.post(url, data)
+            self.assertContains(response, "Free plan CV limit reached", status_code=403)
+        self.assertEqual(CV.objects.filter(user=self.user).count(), 3)
+        ai.assert_not_called()
+
+    def test_deleting_a_cv_allows_a_replacement(self):
+        self.cvs[-1].delete()
+        response = self.client.post(reverse("create_cv"), {"full_name": "Replacement", "template": "modern"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(CV.objects.filter(user=self.user).count(), 3)
+
+    def test_premium_can_create_more_than_three(self):
+        Subscription.objects.create(user=self.user, is_active=True, plan_name="Premium")
+        response = self.client.post(reverse("create_cv"), {"full_name": "Fourth", "template": "modern"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(CV.objects.filter(user=self.user).count(), 4)
+
+    def test_existing_documents_remain_accessible_above_limit(self):
+        CV.objects.create(user=self.user, full_name="Existing fourth CV")
+        for route in ["edit_cv", "download_cv_pdf"]:
+            self.assertEqual(self.client.get(reverse(route, args=[self.cvs[0].id])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("create_cv")).status_code, 403)

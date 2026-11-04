@@ -153,7 +153,25 @@ def import_data_into_cv(cv, parsed_data):
 
 
 
+def enforce_cv_limit(view):
+    """Serialize CV creation per account so parallel requests cannot exceed quota."""
+    from functools import wraps
+    from django.db import transaction
+
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        with transaction.atomic():
+            # All creation routes lock the same account, including for Premium.
+            get_user_model().objects.select_for_update().get(pk=request.user.pk)
+            if (not user_has_active_subscription(request.user)
+                    and CV.objects.filter(user=request.user).count() >= 3):
+                return render(request, "cv_limit.html", status=403)
+            return view(request, *args, **kwargs)
+    return wrapped
+
+
 @login_required
+@enforce_cv_limit
 def create_cv(request):
     """Create a new CV record or import an uploaded CV file via AI parsing."""
     # Create CV: GET = show me the blank form
@@ -627,16 +645,8 @@ def job_match(request, id):
         job_file = request.FILES.get("job_file")
 
         if job_file:
-            # Reuse the CV upload/parser pipeline through a short-lived record.
-            temp_cv = CV.objects.create(
-                user=request.user,
-                full_name="Temporary Job Description File",
-                uploaded_file=job_file,
-            )
-
-            job_description = extract_text_from_cv(temp_cv.uploaded_file.path)
-            # Delete the database row and its temporary association after parsing.
-            temp_cv.delete()
+            # Read the job document directly; it is not a saved candidate CV.
+            job_description = extract_text_from_cv(job_file)
 
         if job_description:
             # Keep the latest job context available to cover-letter generation.
@@ -694,6 +704,7 @@ Education: {cv.education}
 
 
 @login_required
+@enforce_cv_limit
 def tailor_cv_to_job(request, id):
     """Create a new CV variant rewritten for a supplied job description."""
     cv = get_object_or_404(CV, id=id, user=request.user)

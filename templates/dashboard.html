@@ -70,6 +70,7 @@
     <div class="dashboard-header">
       <div>
         <h1>My Dashboard</h1>
+        {% if not is_premium %}<p class="text-muted">{{ total_cvs }} / 3 saved CVs on the Free plan. Tailored copies count towards this limit.</p>{% endif %}
 
         {% if is_premium %}
         <span class="badge bg-success">Current Plan: {{ plan_name }}</span>

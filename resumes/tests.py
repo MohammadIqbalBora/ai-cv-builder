@@ -49,3 +49,22 @@ class SavedCoverLetterTests(TestCase):
     def test_empty_dashboard(self):
         self.cv.delete()
         self.assertContains(self.client.get(reverse("dashboard")), "No CVs Yet")
+
+    def test_dashboard_recovers_legacy_session_letter_once(self):
+        session = self.client.session
+        session["last_cover_letter"] = "Letter from previous release"
+        session["last_cover_letter_cv_id"] = self.cv.id
+        session.save()
+        self.client.get(reverse("dashboard"))
+        self.client.get(reverse("dashboard"))
+        self.assertEqual(CoverLetter.objects.filter(user=self.user).count(), 1)
+        self.assertNotIn("last_cover_letter", self.client.session)
+
+    def test_dashboard_does_not_recover_another_users_letter(self):
+        other_cv = CV.objects.create(user=self.other, full_name="Other candidate")
+        session = self.client.session
+        session["last_cover_letter"] = "Private letter"
+        session["last_cover_letter_cv_id"] = other_cv.id
+        session.save()
+        self.client.get(reverse("dashboard"))
+        self.assertFalse(CoverLetter.objects.exists())

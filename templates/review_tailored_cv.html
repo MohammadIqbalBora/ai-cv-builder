@@ -3,8 +3,10 @@
 <div class="container py-4">
   <h1>Review your tailored CV</h1>
   <p>{{ cv.full_name }}</p>
-  <p>Compare the changes from Job Match, then edit the fields below and save your CV. Your original CV is unchanged.</p>
+  <p>Review the suggestions below. Type your own wording in the editable new CV fields, or choose Use original text to reject a section?s changes. Click Save reviewed CV to keep your choices. Your original CV is unchanged.</p>
   <p><mark>Highlighted text</mark> shows wording removed from the original or added to this CV.</p>
+  {{ cv.original_content|json_script:"original-cv-content" }}
+  <button type="button" class="btn btn-outline-secondary mb-3" id="restore-all">Use original text for all sections</button>
   <form method="post">
     {% csrf_token %}
     {{ form.non_field_errors }}
@@ -24,14 +26,45 @@
           </div>
         </div>
         {% endif %}
-        <label for="{{ section.field.id_for_label }}" class="form-label">Edit {{ section.field.label|lower }}</label>
+        <label for="{{ section.field.id_for_label }}" class="form-label fw-bold">New CV: edit {{ section.field.label|lower }}</label>
+        {% if section.changed %}
+        <button type="button" class="btn btn-outline-secondary btn-sm mb-2 restore-section" data-field="{{ section.field.name }}" data-target="{{ section.field.id_for_label }}">Use original text</button>
+        {% endif %}
         {{ section.field.errors }}
         {{ section.field }}
       </div>
     </section>
     {% endfor %}
+    <p id="review-edit-status" role="status" class="text-muted"></p>
     <button type="submit" class="btn btn-primary">Save reviewed CV</button>
     <a href="{% url 'dashboard' %}?cv={{ cv.id }}" class="btn btn-outline-secondary">Back to dashboard</a>
   </form>
 </div>
+<script>
+  const originalCV = JSON.parse(document.getElementById("original-cv-content").textContent);
+  const reviewStatus = document.getElementById("review-edit-status");
+  function restoreField(name, target) {
+    const field = document.getElementById(target);
+    if (field && Object.prototype.hasOwnProperty.call(originalCV, name)) {
+      field.value = originalCV[name] || "";
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
+  document.querySelectorAll(".restore-section").forEach(button => {
+    button.addEventListener("click", () => {
+      restoreField(button.dataset.field, button.dataset.target);
+      document.getElementById(button.dataset.target).focus();
+      reviewStatus.textContent = "Original wording restored in this field. Save reviewed CV to keep it.";
+    });
+  });
+  document.getElementById("restore-all").addEventListener("click", () => {
+    Object.keys(originalCV).forEach(name => restoreField(name, "id_" + name));
+    reviewStatus.textContent = "Original wording restored in all fields. Save reviewed CV to keep it.";
+  });
+  document.querySelectorAll("form input, form textarea").forEach(field => {
+    field.addEventListener("input", () => {
+      reviewStatus.textContent = "You have unsaved edits. Save reviewed CV to keep your changes. The comparison above shows the version loaded when you opened this page.";
+    });
+  });
+</script>
 {% endblock %}

@@ -87,3 +87,16 @@ class Subscription(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.plan_name}"
     
+
+
+class CoverLetter(models.Model):
+    """A saved generated letter belonging to a user and source CV."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cv = models.ForeignKey(CV, on_delete=models.CASCADE)
+    job_description = models.TextField()
+    content = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Cover letter for {self.cv.full_name}"

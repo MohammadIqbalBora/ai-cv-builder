@@ -4,6 +4,23 @@
 {% extends 'base.html' %} {% block content %} {% if cvs %}
 
 <div class="dashboard-page">
+  <aside class="dashboard-sidebar cover-letter-sidebar">
+    <div class="sidebar-title"><h3>My Cover Letters</h3></div>
+    <div class="sidebar-list">
+      {% for letter in cover_letters %}
+      <a href="{% url 'create_cover_letter' letter.cv_id %}?letter={{ letter.id }}" class="sidebar-cv">
+        <div class="sidebar-icon"><i class="bi bi-envelope"></i></div>
+        <div>
+          <strong>{{ letter.cv.full_name|truncatechars:24 }}</strong>
+          <span>{{ letter.cv.job_title|default:"Cover letter"|truncatechars:24 }}</span>
+          <span>{{ letter.created_at|date:"j M Y, H:i" }}</span>
+        </div>
+      </a>
+      {% empty %}
+      <p class="text-muted">No cover letters saved yet. Generate one from a CV to see it here.</p>
+      {% endfor %}
+    </div>
+  </aside>
   <aside class="dashboard-sidebar">
     <div class="sidebar-title">
       <h3>My CVs</h3>
@@ -146,8 +163,10 @@
         </a>
       </div>
 
-      {% else %}
-
+    </section>
+  </main>
+</div>
+{% else %}
       <div class="card shadow p-5 text-center">
         <h2>No CVs Yet</h2>
         <p class="text-muted fs-4">
@@ -159,7 +178,5 @@
         </a>
       </div>
 
-      {% endif %} {% endblock %}
-    </section>
-  </main>
-</div>
+{% endif %}
+{% endblock %}

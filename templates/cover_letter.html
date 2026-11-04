@@ -1,5 +1,5 @@
 {# This Django template defines the structure and content of this page. #}
-{# Connection: resumes.views.create_cover_letter supplies job context and generated text stored in the browser session. #}
+{# Connection: resumes.views.create_cover_letter supplies job context and generated text stored in the database. #}
 
 {% extends 'base.html' %} {% block content %}
 
@@ -70,7 +70,7 @@
       <div class="cover-actions mt-4">
         {% if cover_letter %}
         <a
-          href="{% url 'download_cover_letter_pdf' cv.id %}"
+          href="{% url 'download_cover_letter_pdf' cv.id %}?letter={{ saved_letter.id }}"
           class="btn btn-success"
         >
           <i class="bi bi-file-earmark-pdf-fill"></i>

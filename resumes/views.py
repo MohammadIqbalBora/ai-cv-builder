@@ -357,7 +357,7 @@ Education: {cv.education}
 
 @login_required
 def create_cover_letter(request, id):
-    """Generate or display a cover letter for a CV based on the last job description."""
+    """Generate a cover letter from a pasted, uploaded, or previously analysed job."""
     cv = get_object_or_404(CV, id=id, user=request.user)
 
     saved_letter = None
@@ -372,9 +372,26 @@ def create_cover_letter(request, id):
     job_description = request.session.get("last_job_description", "")
 
     if request.method == "POST":
-        # A cover letter needs a target job; return to the input page if absent.
+        job_description = request.POST.get("job_description", job_description).strip()
+        job_file = request.FILES.get("job_file")
+        error = ""
+        if job_file:
+            if not job_file.name.lower().endswith((".pdf", ".docx")):
+                error = "Please upload a PDF or Word (.docx) document."
+            else:
+                try:
+                    job_description = extract_text_from_cv(job_file).strip()
+                except Exception:
+                    error = "This document could not be read. Please upload another file or paste the job description."
+                if not error and not job_description:
+                    error = "No text was found in this document. Please paste the job description or upload a document containing text."
         if not job_description:
-            return redirect("job_match", id=cv.id)
+            error = error or "Please paste a job description or upload a PDF or Word document."
+        if error:
+            return render(request, "cover_letter.html", {
+                "cv": cv, "cover_letter": cover_letter, "saved_letter": saved_letter,
+                "job_description": job_description, "error": error,
+            }, status=400)
 
         ai = AIService()
 

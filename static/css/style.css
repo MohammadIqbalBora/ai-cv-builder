@@ -240,20 +240,19 @@ select {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-auto-rows: 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .how-to-steps > li {
     min-width: 0;
 }
 
-#how-to-use .how-to-steps .card-body > p {
-    font-size: 1.25rem;
+.how-to-steps .card-body {
+    padding: 20px;
 }
 
-#how-to-use .how-to-steps .card-body > h3 {
-    font-size: min(calc(1.325rem + 0.9vw), 2rem);
-    font-weight: 700;
+.how-to-steps .card-body > p {
+    margin-bottom: 0;
 }
 
 @media (min-width: 768px) {

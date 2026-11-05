@@ -132,6 +132,22 @@ TEMPLATES = [
 # Deployment imports the `application` object built in config/wsgi.py.
 WSGI_APPLICATION = "config.wsgi.application"
 
+# Send request exceptions to the server logs even when DEBUG is False.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
 
 # --------------------------------------------------
 # DATABASE

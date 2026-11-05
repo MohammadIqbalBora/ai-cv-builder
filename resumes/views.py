@@ -427,6 +427,8 @@ def create_cover_letter(request, id):
         saved_letter = get_object_or_404(
             CoverLetter, id=request.GET["letter"], cv=cv, user=request.user
         )
+        if request.method == "GET":
+            return redirect(f"{reverse('dashboard')}?letter={saved_letter.pk}#dashboard-preview")
     else:
         saved_letter = CoverLetter.objects.filter(cv=cv, user=request.user).order_by("-created_at").first()
     cover_letter = saved_letter.content if saved_letter else None
@@ -462,7 +464,7 @@ def create_cover_letter(request, id):
         saved_letter = CoverLetter.objects.create(
             user=request.user, cv=cv, job_description=job_description, content=cover_letter
         )
-        return redirect(f"{request.path}?letter={saved_letter.id}")
+        return redirect(f"{reverse('dashboard')}?letter={saved_letter.pk}#dashboard-preview")
 
     return render(
         request,

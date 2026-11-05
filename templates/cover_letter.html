@@ -56,28 +56,11 @@
         </p>
       </form>
 
-      {% if cover_letter %}
-      <hr class="my-4" />
-      <div class="letter-output {% if watermarked_documents %}free-document{% endif %}">
-        <pre>{{ cover_letter }}</pre>
-      </div>
-      {% endif %}
-
       <div class="cover-actions mt-4">
         <input id="coverJobFile" type="file" name="job_file" form="coverLetterForm" class="visually-hidden" accept=".pdf,.docx" tabindex="-1" aria-label="Job specification document" />
         <button type="button" class="btn btn-outline-primary" id="uploadJobSpecBtn" aria-describedby="coverJobFileHelp">
           <i class="bi bi-upload"></i> Upload Job Spec
         </button>
-        {% if cover_letter %}
-        <a
-          href="{% url 'download_cover_letter_pdf' cv.id %}?letter={{ saved_letter.id }}"
-          class="btn btn-success"
-        >
-          <i class="bi bi-file-earmark-pdf-fill"></i>
-          Download Cover Letter PDF
-        </a>
-        {% endif %}
-
         <a href="{% url 'dashboard' %}" class="btn btn-primary">
           <i class="bi bi-check-circle-fill"></i> Done
         </a>

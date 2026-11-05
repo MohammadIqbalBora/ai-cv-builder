@@ -248,15 +248,15 @@ select {
 }
 
 .how-to-steps .card-body {
-    font-size: 1.0625rem;
+    font-size: 1.59375rem;
 }
 
 .how-to-steps h3 {
-    font-size: 1.625rem;
+    font-size: 2.4375rem;
 }
 
 .how-to-steps .badge {
-    font-size: 0.875rem;
+    font-size: 1.3125rem;
 }
 
 @media (min-width: 768px) {

@@ -115,6 +115,13 @@ class CoverLetter(models.Model):
     content = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def title(self):
+        name = self.cv.full_name
+        if name.endswith(" - Tailored CV"):
+            return f"{name.removesuffix(' - Tailored CV')} - Tailored Cover Letter"
+        return f"{name} - Cover Letter"
+
     def __str__(self):
         return f"Cover letter for {self.cv.full_name}"
 

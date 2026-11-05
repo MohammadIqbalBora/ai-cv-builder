@@ -40,6 +40,7 @@ urlpatterns = [
     path("cv/improve/<int:id>/", views.improve_cv_ai, name="improve_cv_ai"),
     # Generate a cover letter using this CV as source material.
     path("cover-letter/<int:id>/edit/", views.edit_cover_letter, name="edit_cover_letter"),
+    path("cover-letter/<int:id>/delete/", views.delete_cover_letter, name="delete_cover_letter"),
     path(
         "cover-letter/<int:id>/", views.create_cover_letter, name="create_cover_letter"
     ),

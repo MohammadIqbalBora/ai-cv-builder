@@ -12,8 +12,8 @@
         <div class="sidebar-icon"><i class="bi bi-envelope"></i></div>
         <div>
           <strong>{{ letter.cv.full_name|truncatechars:24 }}</strong>
+          <span>Cover Letter #{{ letter.id }} &middot; {{ letter.created_at|date:"j M Y" }}</span>
           <span>{{ letter.cv.job_title|default:"Cover letter"|truncatechars:24 }}</span>
-          <span>{{ letter.created_at|date:"j M Y, H:i" }}</span>
         </div>
       </a>
       {% empty %}
@@ -85,7 +85,7 @@
     <section class="dashboard-preview-card {% if watermarked_documents %}free-document{% endif %}">
       <div class="preview-top">
         <div>
-          <h2>{{ selected_letter.cv.full_name }} — Cover Letter</h2>
+          <h2>{{ selected_letter.title }}</h2>
           <h4>{{ selected_letter.cv.job_title|default:"Cover letter" }}</h4>
           <p class="text-muted">{{ selected_letter.created_at|date:"j M Y, H:i" }}</p>
         </div>
@@ -98,6 +98,7 @@
       <div class="dashboard-toolbar">
         <a href="{% url 'edit_cover_letter' selected_letter.id %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-fill"></i> Edit</a>
         <a href="{% url 'download_cover_letter_pdf' selected_letter.cv_id %}?letter={{ selected_letter.id }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-pdf-fill"></i> Download PDF</a>
+        <a href="{% url 'delete_cover_letter' selected_letter.id %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash-fill"></i> Delete</a>
       </div>
     </section>
     {% else %}

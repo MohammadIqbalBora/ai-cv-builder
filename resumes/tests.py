@@ -50,6 +50,20 @@ class SavedCoverLetterTests(TestCase):
         self.cv.delete()
         self.assertContains(self.client.get(reverse("dashboard")), "No CVs Yet")
 
+    def test_delete_letter_requires_confirmation_and_ownership(self):
+        letter = CoverLetter.objects.create(user=self.user, cv=self.cv, content="Saved letter", job_description="Role")
+        url = reverse("delete_cover_letter", args=[letter.pk])
+        self.assertContains(self.client.get(url), "Delete Cover Letter")
+        self.assertTrue(CoverLetter.objects.filter(pk=letter.pk).exists())
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.post(url).status_code, 404)
+        self.client.force_login(self.user)
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse("dashboard") + f"?cv={self.cv.pk}#dashboard-preview")
+        self.assertFalse(CoverLetter.objects.filter(pk=letter.pk).exists())
+        self.assertTrue(CV.objects.filter(pk=self.cv.pk).exists())
+
     def test_edit_letter_saves_and_returns_to_dashboard(self):
         letter = CoverLetter.objects.create(user=self.user, cv=self.cv, content="Original letter", job_description="Role")
         url = reverse("edit_cover_letter", args=[letter.pk])

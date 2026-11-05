@@ -366,6 +366,16 @@ Education: {cv.education}
 
 
 @login_required
+def delete_cover_letter(request, id):
+    letter = get_object_or_404(CoverLetter, pk=id, user=request.user)
+    if request.method == "POST":
+        cv_id = letter.cv_id
+        letter.delete()
+        return redirect(f"{reverse('dashboard')}?cv={cv_id}#dashboard-preview")
+    return render(request, "delete_cover_letter.html", {"letter": letter})
+
+
+@login_required
 def edit_cover_letter(request, id):
     letter = get_object_or_404(CoverLetter, pk=id, user=request.user)
     form = CoverLetterForm(request.POST if request.method == "POST" else None, instance=letter)

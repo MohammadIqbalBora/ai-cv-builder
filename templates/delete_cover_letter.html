@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card shadow-sm p-4">
+  <h1>Delete Cover Letter</h1>
+  <p>Delete the cover letter for {{ letter.cv.full_name }}? This cannot be undone.</p>
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a href="{% url 'dashboard' %}?letter={{ letter.id }}#dashboard-preview" class="btn btn-outline-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

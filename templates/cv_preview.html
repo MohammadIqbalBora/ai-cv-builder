@@ -31,6 +31,9 @@
 
     </div>
 
+    {% if cv.template == "classic" %}
+    {% include "includes/classic_cv.html" %}
+    {% else %}
     <!-- CV CARD -->
     <div class="card shadow-sm p-5 {% if watermarked_documents %}free-document{% endif %}">
 
@@ -64,6 +67,7 @@
 
     </div>
 
+    {% endif %}
 </div>
 
 {% endblock %}

@@ -32,25 +32,7 @@
 
 {% elif cv.template == "classic" %}
 
-<div class="card {% if watermarked_documents %}free-document{% endif %} p-4">
-  <h2>{{ cv.full_name }}</h2>
-  <p>{{ cv.email }} | {{ cv.phone }}</p>
-
-  <hr />
-
-  <h3>Professional Summary</h3>
-  <p>{{ cv.professional_summary }}</p>
-
-  <h3>Experience</h3>
-  <p>{{ cv.experience }}</p>
-
-  <h3>Education</h3>
-  <p>{{ cv.education }}</p>
-
-  <h3>Skills</h3>
-  <p>{{ cv.skills }}</p>
-  {% include "includes/additional_cv_sections.html" %}
-</div>
+{% include "includes/classic_cv.html" %}
 
 {% elif cv.template == "executive" %}
 

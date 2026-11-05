@@ -1575,3 +1575,39 @@ footer {
 .pricing-plans .pricing-card h1 { font-size: 46px; }
 .pricing-plans .plan-action { margin-top: auto; padding-top: 24px; }
 .pricing-plans .plan-action .btn { min-height: 58px; }
+
+/* Compact A4 Classic CV, matching the downloadable document. */
+.classic-cv {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 794px;
+  min-height: 1123px;
+  margin: 0 auto;
+  padding: 64px 69px;
+  background: #fff;
+  border: 1px solid #ccc;
+  color: #161616;
+  font: 11px/1.46 Arial, Helvetica, sans-serif;
+  overflow-wrap: anywhere;
+}
+.classic-cv .classic-cv-header h1 {
+  margin: 0 0 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #3979d6;
+  color: #193b56;
+  font: bold 23px/1.25 Arial, Helvetica, sans-serif;
+}
+.classic-cv .classic-cv-header p { margin: 0; font-size: 11px; }
+.classic-cv section { margin-top: 12px; }
+.classic-cv section h2 {
+  margin: 0 0 5px;
+  color: #193b56;
+  font: bold 11px/1.46 Arial, Helvetica, sans-serif;
+}
+@media (max-width: 600px) {
+  .classic-cv { min-height: auto; padding: 32px 24px; }
+}
+@media print {
+  .classic-cv { max-width: none; min-height: auto; padding: 0; border: 0; }
+  .classic-cv h2 { break-after: avoid; }
+}

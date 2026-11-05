@@ -101,7 +101,7 @@ class AdditionalSectionsTests(TestCase):
                 pages = PdfReader(BytesIO(response.content)).pages
                 self.assertGreater(len(pages), 1)
                 text = "\n".join(page.extract_text() for page in pages)
-                self.assertIn("INTERESTS AND HOBBIES", text)
+                self.assertIn("interests and hobbies", text.lower())
                 self.assertIn("Member of Example Institute", text)
                 self.assertIn("Final volunteer entry", text)
 

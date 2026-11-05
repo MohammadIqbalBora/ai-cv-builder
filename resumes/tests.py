@@ -50,6 +50,24 @@ class SavedCoverLetterTests(TestCase):
         self.cv.delete()
         self.assertContains(self.client.get(reverse("dashboard")), "No CVs Yet")
 
+    def test_dashboard_displays_selected_letter_and_source_cv(self):
+        letter = CoverLetter.objects.create(user=self.user, cv=self.cv, content="Dear team,\nMy saved application.", job_description="Role")
+        CV.objects.create(user=self.user, full_name="Another CV")
+        response = self.client.get(reverse("dashboard"), {"letter": letter.pk})
+        self.assertEqual(response.context["selected_letter"], letter)
+        self.assertEqual(response.context["selected_cv"], self.cv)
+        self.assertContains(response, letter.content)
+        self.assertContains(response, reverse("download_cover_letter_pdf", args=[self.cv.pk]) + f"?letter={letter.pk}")
+        response = self.client.get(reverse("dashboard"), {"cv": self.cv.pk})
+        self.assertIsNone(response.context["selected_letter"])
+        self.assertContains(response, reverse("dashboard") + f"?letter={letter.pk}#dashboard-preview")
+
+    def test_dashboard_rejects_another_users_letter(self):
+        other_cv = CV.objects.create(user=self.other, full_name="Private candidate")
+        letter = CoverLetter.objects.create(user=self.other, cv=other_cv, content="Private content", job_description="Role")
+        response = self.client.get(reverse("dashboard"), {"letter": letter.pk})
+        self.assertEqual(response.status_code, 404)
+
     def test_dashboard_recovers_legacy_session_letter_once(self):
         session = self.client.session
         session["last_cover_letter"] = "Letter from previous release"

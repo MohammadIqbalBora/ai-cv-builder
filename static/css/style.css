@@ -490,6 +490,15 @@ body:has(.dashboard-page) .page-shell {
     white-space: pre-wrap;
 }
 
+.cover-letter-preview {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    line-height: 1.7;
+    padding: 0 12px;
+}
+
 .dashboard-toolbar {
     display: flex;
     align-items: center;

@@ -8,7 +8,7 @@
     <div class="sidebar-title"><h3>My Cover Letters</h3></div>
     <div class="sidebar-list">
       {% for letter in cover_letters %}
-      <a href="{% url 'create_cover_letter' letter.cv_id %}?letter={{ letter.id }}" class="sidebar-cv">
+      <a href="{% url 'dashboard' %}?letter={{ letter.id }}#dashboard-preview" class="sidebar-cv {% if selected_letter.id == letter.id %}active{% endif %}">
         <div class="sidebar-icon"><i class="bi bi-envelope"></i></div>
         <div>
           <strong>{{ letter.cv.full_name|truncatechars:24 }}</strong>
@@ -30,7 +30,7 @@
       {% for cv in cvs %}
       <a
         href="{% url 'dashboard' %}?cv={{ cv.id }}"
-        class="sidebar-cv {% if selected_cv.id == cv.id %}active{% endif %}"
+        class="sidebar-cv {% if not selected_letter and selected_cv.id == cv.id %}active{% endif %}"
       >
         <div class="sidebar-icon">
           <i class="bi bi-file-earmark-text"></i>
@@ -64,7 +64,7 @@
     {% endif %}
   </aside>
 
-  <main class="dashboard-main">
+  <main class="dashboard-main" id="dashboard-preview">
     <div class="dashboard-header">
       <div>
         <h1>My Dashboard</h1>
@@ -81,6 +81,27 @@
 
     
 
+    {% if selected_letter %}
+    <section class="dashboard-preview-card {% if watermarked_documents %}free-document{% endif %}">
+      <div class="preview-top">
+        <div>
+          <h2>{{ selected_letter.cv.full_name }} — Cover Letter</h2>
+          <h4>{{ selected_letter.cv.job_title|default:"Cover letter" }}</h4>
+          <p class="text-muted">{{ selected_letter.created_at|date:"j M Y, H:i" }}</p>
+        </div>
+        <span class="badge bg-dark">Cover Letter</span>
+      </div>
+      <hr />
+      <div class="cover-letter-preview">
+        <p class="preserve-lines">{{ selected_letter.content }}</p>
+      </div>
+      <div class="dashboard-toolbar">
+        <a href="{% url 'dashboard' %}?cv={{ selected_letter.cv_id }}" class="btn btn-outline-primary btn-sm">View CV</a>
+        <a href="{% url 'download_cover_letter_pdf' selected_letter.cv_id %}?letter={{ selected_letter.id }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-pdf-fill"></i> Download PDF</a>
+        <a href="{% url 'create_cover_letter' selected_letter.cv_id %}?letter={{ selected_letter.id }}" class="btn btn-info btn-sm">Generate New Cover Letter</a>
+      </div>
+    </section>
+    {% else %}
     <section class="dashboard-preview-card {% if watermarked_documents %}free-document{% endif %}">
       <div class="preview-top">
         <div>
@@ -136,7 +157,7 @@
         </a>
 
         <a
-          href="{% url 'create_cover_letter' selected_cv.id %}"
+          href="{% if latest_cv_letter %}{% url 'dashboard' %}?letter={{ latest_cv_letter.id }}#dashboard-preview{% else %}{% url 'create_cover_letter' selected_cv.id %}{% endif %}"
           class="btn btn-info btn-sm"
         >
           <i class="bi bi-envelope-fill"></i> Cover Letter
@@ -158,6 +179,7 @@
       </div>
 
     </section>
+    {% endif %}
   </main>
 </div>
 {% else %}

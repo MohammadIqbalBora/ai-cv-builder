@@ -77,6 +77,9 @@ def dashboard(request):
             request.session.pop("last_cover_letter_cv_id", None)
 
     cover_letters = CoverLetter.objects.filter(user=request.user).select_related("cv").order_by("-created_at")
+    selected_letter = None
+    if request.GET.get("letter"):
+        selected_letter = get_object_or_404(cover_letters, pk=request.GET["letter"])
 
     selected_cv = None
     # A `?cv=ID` query string lets the page request one selected CV.
@@ -89,6 +92,10 @@ def dashboard(request):
     # Default to the newest CV when no valid explicit selection exists.
     if not selected_cv and cvs.exists():
         selected_cv = cvs.first()
+
+    if selected_letter:
+        selected_cv = selected_letter.cv
+    latest_cv_letter = cover_letters.filter(cv=selected_cv).first() if selected_cv else None
 
     # Subscription is optional, so retrieve the row without requiring one.
     subscription = Subscription.objects.filter(user=request.user).first()
@@ -114,6 +121,8 @@ def dashboard(request):
             "ai_improvements_used": total_cvs,
             "cover_letters_generated": cover_letters.count(),
             "cover_letters": cover_letters,
+            "selected_letter": selected_letter,
+            "latest_cv_letter": latest_cv_letter,
             "is_premium": is_premium,
             "plan_name": plan_name,
         },

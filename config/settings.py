@@ -161,6 +161,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# Password recovery links expire after 24 hours and are invalidated on use.
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24
+
 
 # --------------------------------------------------
 # INTERNATIONALIZATION

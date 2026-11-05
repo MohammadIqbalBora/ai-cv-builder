@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-page login-page">
+  <div class="auth-card">
+    <div class="auth-left">
+      <span class="badge bg-primary mb-3">Account recovery</span>
+      <h1>Get back into your account</h1>
+      <p>Use your registered email address to recover your username or reset your password.</p>
+    </div>
+    <div class="auth-right">
+      {% block recovery_content %}{% endblock %}
+      <p class="mt-4 text-center"><a href="{% url 'login' %}">Back to login</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

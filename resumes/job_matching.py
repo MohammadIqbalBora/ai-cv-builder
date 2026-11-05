@@ -22,6 +22,9 @@ def cv_matching_text(cv):
 
 
 def match_fingerprint(cv, job_description):
+    # HTML parsing and form submission convert LF and CRLF line endings.
+    # These transport changes do not change the job that was analysed.
+    job_description = job_description.replace("\r\n", "\n").replace("\r", "\n").strip()
     data = json.dumps([cv.pk, cv_matching_text(cv), job_description], ensure_ascii=False)
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 

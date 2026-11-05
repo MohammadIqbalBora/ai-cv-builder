@@ -74,6 +74,21 @@ class JobMatchPolicyTests(TestCase):
         self.assertEqual(CV.objects.filter(user=self.user).count(), 1)
 
     @patch("resumes.views.AIService")
+    def test_multiline_job_survives_browser_form_line_endings(self, ai):
+        self.job = 'Software Developer\r\nPython & Django\r\nBuild "reliable" applications.'
+        ai.return_value.tailor_cv_to_job.return_value = {"skills": "Python, Django"}
+        self.analyse(ai, 70)
+        # Browsers normalise HTML newlines to LF, then submit forms with CRLF.
+        for newline in ("\n", "\r\n", "\r"):
+            with self.subTest(newline=repr(newline)):
+                submitted_job = self.job.replace("\r\n", newline)
+                response = self.client.post(self.tailor_url, {"job_description": submitted_job})
+                self.assertEqual(response.status_code, 302)
+                self.assertIn("review", response.url)
+        self.assertEqual(ai.return_value.analyse_job_description.call_count, 1)
+        self.assertEqual(ai.return_value.tailor_cv_to_job.call_count, 3)
+
+    @patch("resumes.views.AIService")
     def test_analysis_is_required_before_direct_tailoring(self, ai):
         response = self.client.post(self.tailor_url, {"job_description": self.job})
         self.assertContains(response, "Analyse this CV against this job description", status_code=400)

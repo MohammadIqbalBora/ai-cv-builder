@@ -141,11 +141,19 @@ def parse_cv_with_ai_or_fallback(extracted_text):
         validate_additional_sections(sections)
         titles = {section["title"].strip().casefold() for section in sections}
         for section in extract_additional_sections(extracted_text):
-            if section["title"].casefold() not in titles:
+            existing = next((item for item in sections if item["title"].strip().casefold() == section["title"].casefold()), None)
+            # Preserve source project links and their association with each project.
+            if existing and ("https://" in section["content"] or "http://" in section["content"]):
+                existing["content"] = section["content"]
+            elif section["title"].casefold() not in titles:
                 sections.append(section)
         validate_additional_sections(sections)
         result = {key: make_plain_text(value) for key, value in data.items() if key != "additional_sections"}
         fallback = parse_cv_text(extracted_text)
+        # Employment history is factual source text: do not let an AI rewrite
+        # drop employers, job titles, dates, or responsibilities.
+        if fallback.get("experience"):
+            result["experience"] = fallback["experience"]
         for key, value in fallback.items():
             if key != "additional_sections" and not result.get(key):
                 result[key] = value

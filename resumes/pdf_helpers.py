@@ -6,6 +6,34 @@
 
 # ReportLab converts hex colors and draws them onto the PDF canvas.
 from reportlab.lib import colors
+import re
+from xml.sax.saxutils import escape, quoteattr
+
+
+URL_PATTERN = re.compile(r"https?://[^\s<>()]+", re.IGNORECASE)
+
+
+def linked_paragraph_text(text):
+    """Escape source text and turn web URLs into ReportLab paragraph links."""
+    parts = []
+    position = 0
+    for match in URL_PATTERN.finditer(text):
+        url = match.group().rstrip(".,;")
+        end = match.start() + len(url)
+        parts.extend([escape(text[position:match.start()]),
+                      f'<link href={quoteattr(url)} color="#2563eb">{escape(url)}</link>'])
+        position = end
+    parts.append(escape(text[position:]))
+    return "".join(parts)
+
+
+def draw_linked_line(pdf, x, y, line, font_name, font_size):
+    pdf.drawString(x, y, line)
+    for match in URL_PATTERN.finditer(line):
+        url = match.group().rstrip(".,;")
+        left = x + pdf.stringWidth(line[:match.start()], font_name, font_size)
+        right = left + pdf.stringWidth(url, font_name, font_size)
+        pdf.linkURL(url, (left, y - 2, right, y + font_size), relative=0, thickness=0)
 
 
 def new_page_if_needed(pdf, y, height, top_margin=55):
@@ -58,7 +86,7 @@ def draw_wrapped_text(
             # Draw the completed line and begin a new line with this word.
             y = new_page_if_needed(pdf, y, height)
             pdf.setFont(font_name, font_size)
-            pdf.drawString(x, y, line)
+            draw_linked_line(pdf, x, y, line, font_name, font_size)
             y -= line_height
             line = word
 
@@ -66,7 +94,7 @@ def draw_wrapped_text(
     if line:
         y = new_page_if_needed(pdf, y, height)
         pdf.setFont(font_name, font_size)
-        pdf.drawString(x, y, line)
+        draw_linked_line(pdf, x, y, line, font_name, font_size)
         y -= line_height
 
     return y

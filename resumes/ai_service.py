@@ -44,9 +44,14 @@ def make_plain_text(value):
             value.get("Company Name")
             or value.get("company_name")
             or value.get("company")
+            or value.get("employer")
+            or value.get("employer_name")
+            or value.get("Employer")
+            or value.get("Company")
         )
         job_title = (
             value.get("Job Title") or value.get("job_title") or value.get("title")
+            or value.get("role") or value.get("position")
         )
         dates = value.get("Dates") or value.get("dates")
         responsibilities = (
@@ -205,7 +210,8 @@ Your task is to:
 2. Create a strong professional summary if the original is missing or weak.
 3. Remove duplicate repeated job descriptions.
 4. Group skills logically.
-5. Rewrite experience bullet points using strong action verbs.
+5. Transcribe employment history faithfully, preserving every employer, job title,
+   employment date and responsibility. Do not shorten it or remove company names.
 6. Keep facts accurate. Do not invent jobs, companies, dates or qualifications.
 7. Use clear UK CV formatting.
 
@@ -228,6 +234,8 @@ Rules:
 - Preserve Projects, memberships, interests, languages, volunteering, awards and other
   sections outside the standard fields in additional_sections.
 - Preserve all project names, technologies, descriptions and achievements from the source.
+- Preserve every website URL and hyperlink destination, including Live demo, GitHub
+  and portfolio links. Keep each URL beside the project or entry it belongs to.
 - Do not merge Projects into work experience or education. Do not omit extra sections.
 - Return an empty array for additional_sections if none are present.
 - Include at most 10 extra sections, with titles up to 80 characters and content up to 5000 characters.
@@ -247,6 +255,8 @@ these only when supported by the supplied CV. For other professions, use their o
 relevant skill categories. Do not introduce IT skills unless the CV contains them.
 
 experience:
+Preserve employer names, role titles and dates exactly as supplied. Never replace
+employment entries with dates and bullet points alone. Keep separate roles separate.
 Use this format for each role:
 
 Company Name

@@ -4,6 +4,7 @@ import re
 from xml.sax.saxutils import escape
 
 from django.http import HttpResponse
+from .pdf_helpers import linked_paragraph_text
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -68,9 +69,9 @@ def render_classic_pdf(cv, watermark=False):
                 continue
             match = re.match(r"^(?:[\u2022\u25cf\u25aa*\-]|\d+[.)])\s+(.+)", line)
             if match:
-                story.append(Paragraph(escape(match.group(1)), bullet, bulletText="\u2022"))
+                story.append(Paragraph(linked_paragraph_text(match.group(1)), bullet, bulletText="\u2022"))
             else:
-                text = escape(line)
+                text = linked_paragraph_text(line)
                 # A role/project line immediately preceding bullets is an entry heading.
                 if entries and index + 1 < len(lines) and re.match(
                     r"\s*(?:[\u2022\u25cf\u25aa*\-]|\d+[.)])\s+", lines[index + 1]

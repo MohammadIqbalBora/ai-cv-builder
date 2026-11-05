@@ -126,7 +126,7 @@
           <p class="preserve-lines">{{ selected_cv.experience|default:"No experience added yet." }}</p>
           {% for section in selected_cv.additional_sections %}
           <h3>{{ section.title }}</h3>
-          <p class="preserve-lines">{{ section.content }}</p>
+          <p class="preserve-lines">{{ section.content|urlize }}</p>
           {% endfor %}
         </div>
 

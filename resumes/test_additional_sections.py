@@ -91,6 +91,41 @@ English
         self.assertIn("Halal Bites", data["additional_sections"][0]["content"])
         self.assertNotIn("English", data["additional_sections"][0]["content"])
 
+    @patch("resumes.views.AIService")
+    def test_import_preserves_employers_roles_and_dates_in_all_templates(self, ai):
+        from docx import Document
+        experience = (
+            "DXC Technologies\nMobile IT Field Engineer (Contract)\nJune 2025 - August 2025\n"
+            "Provided onsite technical support.\n"
+            "London Fire Brigade (LFB)\nBridge Engineer (Contract)\nMay 2024 - August 2024\n"
+            "Monitored critical services."
+        )
+        ai.return_value.parse_uploaded_cv.return_value = {
+            "full_name": "Example Candidate",
+            "experience": "June 2025 - August 2025\nProvided onsite technical support.",
+        }
+        document = Document()
+        for line in ("Example Candidate\nWork Experience\n" + experience + "\nEducation\nDiploma").splitlines():
+            document.add_paragraph(line)
+        stream = BytesIO()
+        document.save(stream)
+        with TemporaryDirectory() as directory, override_settings(MEDIA_ROOT=directory):
+            response = self.client.post(reverse("create_cv"), {
+                "action": "import", "uploaded_file": SimpleUploadedFile("cv.docx", stream.getvalue()),
+            })
+            cv = CV.objects.get(user=self.user)
+            self.assertRedirects(response, reverse("edit_cv", args=[cv.pk]))
+            self.assertEqual(cv.experience, experience)
+            for template, _ in CV.TEMPLATE_CHOICES:
+                with self.subTest(template=template):
+                    response = self.client.get(reverse("download_cv_pdf", args=[cv.pk]), {"template": template})
+                    self.assertEqual(response.status_code, 200)
+                    text = "\n".join(page.extract_text() for page in PdfReader(BytesIO(response.content)).pages)
+                    for expected in ["DXC Technologies", "Mobile IT Field Engineer (Contract)",
+                                     "June 2025 - August 2025", "London Fire Brigade (LFB)",
+                                     "Bridge Engineer (Contract)", "May 2024 - August 2024"]:
+                        self.assertIn(expected, text)
+
     def test_word_tables_are_extracted_in_document_order(self):
         from docx import Document
         from resumes.cv_parser import extract_text_from_docx
@@ -108,6 +143,66 @@ English
             "Example Candidate", "Professional Memberships", "Member of Example Institute",
             "Achievements", "Completed an accessibility improvement project",
         ])
+
+    @patch("resumes.views.AIService")
+    def test_hidden_demo_links_survive_word_pdf_import_and_all_exports(self, ai):
+        from docx import Document
+        from docx.oxml import OxmlElement
+        from docx.oxml.ns import qn
+        from docx.opc.constants import RELATIONSHIP_TYPE
+        from reportlab.pdfgen import canvas
+        projects = [
+            ("AI CV Builder", "https://cv.example.com/demo"),
+            ("Weather Hub", "https://weather.example.com/?city=London&units=metric"),
+        ]
+        ai.return_value.parse_uploaded_cv.return_value = {
+            "full_name": "Example Candidate", "additional_sections": [
+                {"title": "Projects", "content": "AI CV Builder | Live demo\nWeather Hub | Live demo"},
+            ],
+        }
+        with TemporaryDirectory() as directory, override_settings(MEDIA_ROOT=directory):
+            for extension in ["docx", "pdf"]:
+                stream = BytesIO()
+                if extension == "docx":
+                    document = Document()
+                    document.add_paragraph("Example Candidate")
+                    document.add_paragraph("Projects")
+                    for name, url in projects:
+                        paragraph = document.add_paragraph(name + " | ")
+                        link = OxmlElement("w:hyperlink")
+                        link.set(qn("r:id"), paragraph.part.relate_to(url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True))
+                        run = OxmlElement("w:r")
+                        text = OxmlElement("w:t")
+                        text.text = "Live demo"
+                        run.append(text)
+                        link.append(run)
+                        paragraph._p.append(link)
+                    document.save(stream)
+                else:
+                    pdf = canvas.Canvas(stream)
+                    pdf.drawString(50, 780, "Example Candidate")
+                    pdf.drawString(50, 750, "Projects")
+                    for index, (name, url) in enumerate(projects):
+                        y = 720 - index * 30
+                        pdf.drawString(50, y, name + " |")
+                        pdf.drawString(200, y, "Live demo")
+                        pdf.linkURL(url, (200, y - 2, 280, y + 12))
+                    pdf.save()
+                response = self.client.post(reverse("create_cv"), {
+                    "action": "import", "uploaded_file": SimpleUploadedFile("cv." + extension, stream.getvalue()),
+                })
+                self.assertEqual(response.status_code, 302)
+                cv = CV.objects.filter(user=self.user).latest("pk")
+                for name, url in projects:
+                    self.assertIn(f"{name} | Live demo ({url})", " ".join(cv.additional_sections[0]["content"].split()))
+                for template, _ in CV.TEMPLATE_CHOICES:
+                    with self.subTest(upload=extension, template=template):
+                        response = self.client.get(reverse("download_cv_pdf", args=[cv.pk]), {"template": template})
+                        pages = PdfReader(BytesIO(response.content)).pages
+                        urls = {annotation.get_object().get("/A", {}).get("/URI")
+                                for page in pages for annotation in page.get("/Annots", [])}
+                        for _, url in projects:
+                            self.assertIn(url, urls)
 
     def test_other_sections_and_heading_variants_survive_all_pdf_templates(self):
         from resumes.cv_parser import parse_cv_text

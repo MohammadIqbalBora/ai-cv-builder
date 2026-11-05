@@ -16,6 +16,20 @@ from docx.table import Table
 from pypdf import PdfReader
 
 
+def web_url(value):
+    return isinstance(value, str) and value.lower().startswith(("https://", "http://"))
+
+
+def paragraph_text(paragraph):
+    parts = []
+    for item in paragraph.iter_inner_content():
+        parts.append(item.text)
+        url = getattr(item, "url", "")
+        if web_url(url) and url not in item.text:
+            parts.append(f" ({url})")
+    return "".join(parts)
+
+
 def extract_text_from_pdf(file_path):
     """Read all text from a PDF file and return it as a single string."""
     text = ""
@@ -25,9 +39,39 @@ def extract_text_from_pdf(file_path):
 
     # Some PDF pages contain no extractable text, so skip empty results.
     for page in reader.pages:
-        page_text = page.extract_text()
+        fragments = []
+        def remember(fragment, cm, tm, font, size):
+            if fragment.strip():
+                x = tm[4] * cm[0] + tm[5] * cm[2] + cm[4]
+                y = tm[4] * cm[1] + tm[5] * cm[3] + cm[5]
+                fragments.append((fragment.strip(), x, y, size))
+        page_text = page.extract_text(visitor_text=remember) or ""
+        extra_links = []
+        for reference in page.get("/Annots", []):
+            annotation = reference.get_object()
+            url = annotation.get("/A", {}).get("/URI", "")
+            if not web_url(url) or url in page_text:
+                continue
+            rect = annotation.get("/Rect")
+            candidates = []
+            if rect:
+                left, bottom, right, top = map(float, rect)
+                candidates = [fragment for fragment in fragments
+                              if bottom - fragment[3] <= fragment[2] <= top + fragment[3]
+                              and fragment[1] <= right]
+            if candidates:
+                label = min(candidates, key=lambda f: abs(f[2] - (bottom + top) / 2) + abs(f[1] - left) / 10)[0]
+                page_text = re.sub(
+                    re.escape(label) + r"(?! \(https?://)",
+                    lambda match: f"{match.group()} ({url})",
+                    page_text, count=1, flags=re.IGNORECASE,
+                )
+            else:
+                extra_links.append(url)
         if page_text:
             text += page_text + "\n"
+        if extra_links:
+            text += "Links\n" + "\n".join(extra_links) + "\n"
 
     return text.strip()
 
@@ -45,9 +89,9 @@ def extract_text_from_docx(file_path):
                 for cell in row.cells:
                     if cell._tc not in seen:
                         seen.add(cell._tc)
-                        text.extend(p.text for p in cell.paragraphs if p.text)
+                        text.extend(paragraph_text(p) for p in cell.paragraphs if p.text)
         elif block.text:
-            text.append(block.text)
+            text.append(paragraph_text(block))
 
     return "\n".join(text).strip()
 
@@ -89,6 +133,7 @@ def extract_name(text):
 
 
 ADDITIONAL_HEADINGS = {
+    "links", "websites", "portfolio links", "social links",
     "projects", "personal projects", "key projects", "technical projects",
     "professional projects", "interests", "interests and hobbies", "hobbies",
     "professional memberships", "memberships", "languages", "volunteering",

@@ -33,6 +33,10 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from .ai_service import AIService
 from .cv_parser import extract_text_from_cv, parse_cv_text
 from .forms import CVForm, TailoredCVReviewForm
+from .job_matching import (
+    MIN_TAILOR_MATCH_SCORE, cv_matching_text, job_match_context,
+    match_fingerprint, normalise_analysis,
+)
 from .models import CV, CoverLetter, Subscription, FreeDownloadUsage, ApplicationPack
 from .payments import fulfil_application_pack
 from .watermarks import watermark_pdf_response
@@ -772,52 +776,25 @@ def job_match(request, id):
 
             ai = AIService()
 
-            cv_text = f"""
-Name: {cv.full_name}
-Job Title: {cv.job_title}
-Email: {cv.email}
-Phone: {cv.phone}
-Address: {cv.address}
-Professional Summary: {cv.professional_summary}
-Skills: {cv.skills}
-Experience: {cv.experience}
-Education: {cv.education}
-"""
-
-            # AIService returns a comparison that the template renders directly.
-            analysis = ai.analyse_job_description(cv_text, job_description)
-
+            analysis = normalise_analysis(ai.analyse_job_description(cv_matching_text(cv), job_description))
             request.session["last_job_analysis"] = analysis
+            request.session["last_job_match_fingerprint"] = match_fingerprint(cv, job_description)
 
-            return render(
-                request,
-                "job_match.html",
-                {
-                    "cv": cv,
-                    "analysis": analysis,
-                    "job_description": job_description,
-                    "message": "Job description analysed successfully.",
-                },
-            )
+            return render(request, "job_match.html", job_match_context(
+                cv, job_description, analysis, message="Job description analysed successfully.",
+            ))
 
-        return render(
-            request,
-            "job_match.html",
-            {
-                "cv": cv,
-                "message": "Please paste or upload a job description first.",
-            },
-        )
+        return render(request, "job_match.html", job_match_context(
+            cv, message="Please paste or upload a job description first.", message_level="warning",
+        ))
 
-    return render(
-        request,
-        "job_match.html",
-        {
-            "cv": cv,
-            "analysis": analysis,
-            "job_description": job_description,
-        },
-    )
+    # Keep the latest results visible when returning to this unchanged CV.
+    job_description = request.session.get("last_job_description", "")
+    if request.session.get("last_job_match_fingerprint") == match_fingerprint(cv, job_description):
+        analysis = normalise_analysis(request.session.get("last_job_analysis"))
+    else:
+        job_description = ""
+    return render(request, "job_match.html", job_match_context(cv, job_description, analysis))
 
 
 @login_required
@@ -832,20 +809,23 @@ def tailor_cv_to_job(request, id):
         if not job_description:
             return redirect("job_match", id=cv.id)
 
-        cv_text = f"""
-Name: {cv.full_name}
-Job Title: {cv.job_title}
-Email: {cv.email}
-Phone: {cv.phone}
-Summary: {cv.professional_summary}
-Skills: {cv.skills}
-Experience: {cv.experience}
-Education: {cv.education}
-"""
+        # Accept only a server-held result for this exact CV and job description.
+        if request.session.get("last_job_match_fingerprint") != match_fingerprint(cv, job_description):
+            return render(request, "job_match.html", job_match_context(
+                cv, job_description, message_level="warning",
+                message="Analyse this CV against this job description before tailoring. If you changed either, analyse again.",
+            ), status=400)
+
+        analysis = normalise_analysis(request.session.get("last_job_analysis"))
+        score = analysis["match_score"]
+        if score is None or score < MIN_TAILOR_MATCH_SCORE:
+            return render(request, "job_match.html", job_match_context(
+                cv, job_description, analysis,
+            ), status=403)
 
         ai = AIService()
         # Never overwrite the source CV: request tailored structured field data.
-        tailored_data = ai.tailor_cv_to_job(cv_text, job_description)
+        tailored_data = ai.tailor_cv_to_job(cv_matching_text(cv), job_description)
 
         # Avoid repeatedly appending the suffix when tailoring an existing copy.
         base_name = cv.full_name.split(" - Tailored CV")[0]

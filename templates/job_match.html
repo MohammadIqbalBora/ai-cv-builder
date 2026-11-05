@@ -20,7 +20,7 @@
   </div>
 
   {% if message %}
-  <div class="alert alert-success">
+  <div class="alert alert-{{ message_level|default:'success' }}">
     <i class="bi bi-check-circle-fill"></i>
     {{ message }}
   </div>
@@ -119,7 +119,23 @@
             value="{{ job_description }}"
           />
 
-          <button type="submit" class="btn btn-success w-100" id="tailorCvBtn">
+          {% if not can_tailor %}
+          <div class="alert alert-warning mt-3" id="tailoringGuidance" role="status">
+            {% if match_score == None %}
+            A valid match score could not be determined. Analyse the job description again before tailoring.
+            {% else %}
+            Your match score is {{ match_score|floatformat:"-1" }}%. Tailoring requires at least {{ minimum_match_score }}%.
+            Review the missing skills below, add any relevant experience you already have, or choose a closer-fitting role.
+            {% endif %}
+          </div>
+          {% elif weak_match %}
+          <div class="alert alert-warning mt-3" id="tailoringGuidance" role="status">
+            Your match score is {{ match_score|floatformat:"-1" }}%. You can tailor this CV, but there are gaps in the job requirements.
+            Tailoring can highlight existing experience; it cannot add missing qualifications or experience.
+          </div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-success w-100" id="tailorCvBtn"{% if not can_tailor %} disabled aria-disabled="true"{% endif %}{% if not can_tailor or weak_match %} aria-describedby="tailoringGuidance"{% endif %}>
             <i class="bi bi-magic"></i>
             <span class="btn-text">Tailor My CV</span>
           </button>
@@ -145,15 +161,21 @@
       <div class="job-match-results-grid">
         <div class="match-result-card">
           <h5>Match Score</h5>
+          {% if match_score != None %}
+          <p class="fw-bold mb-2">{{ match_score|floatformat:"-1" }}%</p>
           <div class="progress mb-3" style="height: 30px">
             <div
-              class="progress-bar bg-success"
+              class="progress-bar {% if not can_tailor %}bg-danger{% elif weak_match %}bg-warning text-dark{% else %}bg-success{% endif %}"
               role="progressbar"
-              style="width: {{ analysis.match_score }}%;"
+              aria-valuenow="{{ match_score }}" aria-valuemin="0" aria-valuemax="100"
+              aria-label="Job match score"
+              style="width: {{ match_score }}%;"
             >
-              {{ analysis.match_score }}%
             </div>
           </div>
+          {% else %}
+          <p>Score unavailable</p>
+          {% endif %}
         </div>
 
         
@@ -195,7 +217,7 @@
   const tailorCvBtn = document.getElementById("tailorCvBtn");
   const tailorCvStatus = document.getElementById("tailorCvStatus");
 
-  if (tailorCvBtn) {
+  if (tailorCvBtn && !tailorCvBtn.disabled) {
     tailorCvBtn.addEventListener("click", function () {
       tailorCvStatus.classList.remove("d-none");
 

@@ -109,6 +109,8 @@ class AdditionalSectionsTests(TestCase):
     def test_tailored_copy_preserves_extra_sections(self, ai):
         cv = CV.objects.create(user=self.user, full_name="Example", additional_sections=self.sections)
         ai.return_value.tailor_cv_to_job.return_value = {"skills": "Communication"}
+        ai.return_value.analyse_job_description.return_value = {"match_score": 70}
+        self.client.post(reverse("job_match", args=[cv.pk]), {"job_description": "Example role"})
         response = self.client.post(reverse("tailor_cv_to_job", args=[cv.pk]), {"job_description": "Example role"})
         self.assertEqual(response.status_code, 302)
         tailored = CV.objects.exclude(pk=cv.pk).get(user=self.user)

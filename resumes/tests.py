@@ -174,6 +174,8 @@ class TailoredCVReviewTests(TestCase):
     @patch("resumes.views.AIService")
     def test_tailoring_redirects_to_editable_comparison_and_preserves_source(self, ai):
         ai.return_value.tailor_cv_to_job.return_value = {"job_title": "English Teacher", "skills": "Lesson planning and assessment"}
+        ai.return_value.analyse_job_description.return_value = {"match_score": 70}
+        self.client.post(reverse("job_match", args=[self.source.id]), {"job_description": "English teacher"})
         response = self.client.post(reverse("tailor_cv_to_job", args=[self.source.id]), {"job_description": "English teacher"})
         tailored = CV.objects.exclude(id=self.source.id).get()
         self.assertRedirects(response, reverse("review_tailored_cv", args=[tailored.id]))

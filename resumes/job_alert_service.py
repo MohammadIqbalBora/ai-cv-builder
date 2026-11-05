@@ -1,4 +1,4 @@
-"""UK job search and weekly digests; no CV data is sent to the provider."""
+"""UK job search and daily or weekly digests; no CV data is sent to the provider."""
 import logging
 import re
 from datetime import timedelta
@@ -130,7 +130,8 @@ def send_confirmation(preference):
         return False
     url = absolute_url("confirm_job_alerts", preference.email_token)
     unsubscribe = absolute_url("unsubscribe_job_alerts", preference.email_token)
-    body = ("You requested weekly job alerts from AI CV Builder. Confirm your email to start receiving them:\n"
+    frequency = "daily" if preference.frequency == "daily" else "weekly"
+    body = (f"You requested {frequency} job alerts from AI CV Builder. Confirm your email to start receiving them:\n"
             + url + "\n\nIf you did not request this, ignore this email or stop the request here:\n" + unsubscribe)
     message = EmailMultiAlternatives("Confirm your AI CV Builder job alerts", body,
                                     settings.DEFAULT_FROM_EMAIL, [preference.user.email])
@@ -142,7 +143,7 @@ def send_confirmation(preference):
     return True
 
 
-def send_weekly_digest(preference):
+def send_job_digest(preference):
     """Caller must hold a lock on this preference until delivery is recorded."""
     now = timezone.now()
     if (not preference.enabled or not preference.cv or not preference.user.email
@@ -158,7 +159,9 @@ def send_weekly_digest(preference):
         if preference.confirmation_sent_at:
             return "skipped"
         return "confirmation" if send_confirmation(preference) else "skipped"
-    if preference.last_checked_at and preference.last_checked_at > now - timedelta(days=7):
+    frequency = "daily" if preference.frequency == "daily" else "weekly"
+    interval = timedelta(days=1 if frequency == "daily" else 7)
+    if preference.last_checked_at and preference.last_checked_at > now - interval:
         return "skipped"
     preference.last_attempt_at = now
     preference.save(update_fields=["last_attempt_at"])
@@ -166,11 +169,11 @@ def send_weekly_digest(preference):
     matches = rank_jobs(preference, search_jobs(preference), sent_ids)
     if matches:
         unsubscribe = absolute_url("unsubscribe_job_alerts", preference.email_token)
-        context = {"jobs": matches, "preferences_url": absolute_url("job_alert_preferences"), "unsubscribe_url": unsubscribe}
+        context = {"jobs": matches, "frequency": frequency, "preferences_url": absolute_url("job_alert_preferences"), "unsubscribe_url": unsubscribe}
         text = render_to_string("emails/job_digest.txt", context)
         html = render_to_string("emails/job_digest.html", context)
         message = EmailMultiAlternatives(
-            "Your weekly job matches from AI CV Builder", text, settings.DEFAULT_FROM_EMAIL,
+            f"Your {frequency} job matches from AI CV Builder", text, settings.DEFAULT_FROM_EMAIL,
             [preference.user.email], headers={"List-Unsubscribe": "<" + unsubscribe + ">"},
         )
         message.attach_alternative(html, "text/html")

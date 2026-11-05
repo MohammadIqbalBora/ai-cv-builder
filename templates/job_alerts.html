@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container py-4" style="max-width: 1000px">
   <h1>Premium Job Alerts</h1>
-  <p>Find UK vacancies using your chosen role and location, then compare them with your CV. Receive up to five new matches in a weekly email.</p>
+  <p>Find UK vacancies using your chosen role and location, then compare them with your CV. Choose daily or weekly emails with up to five new matches per email.</p>
   {% if not ready %}<div class="alert alert-info">Job alerts are being prepared. You can save your preferences now, but searching and emails will start only when the service is connected.</div>{% endif %}
   {% if not premium %}
     <div class="card p-4"><h2 class="h4">Job alerts are a Premium feature</h2><p>Your Application Pack covers document downloads. An active Premium subscription is needed for job alerts.</p><a href="{% url 'pricing' %}" class="btn btn-primary">View plans</a></div>
@@ -14,11 +14,11 @@
     <div class="row g-4">
       <div class="col-md-7"><div class="card p-4">
         <h2 class="h4">Your search preferences</h2>
-        <p>Weekly emails go to <strong>{{ user.email }}</strong>. Choose the CV most relevant to your target role. Each option shows its job title, creation date and CV number, also shown on your dashboard. Only the selected CV is used for matching; your other CVs are not combined.</p>
+        <p>Job alert emails go to <strong>{{ user.email }}</strong> at your chosen frequency. Choose the CV most relevant to your target role. Each option shows its job title, creation date and CV number, also shown on your dashboard. Only the selected CV is used for matching; your other CVs are not combined.</p>
         {% if not form.fields.cv.queryset %}<p><a href="{% url 'create_cv' %}">Create or upload a CV</a> to get started.</p>{% endif %}
         <form method="post">
           {% csrf_token %}{{ form.non_field_errors }}
-          {% for field in form %}<div class="mb-3">{{ field.label_tag }} {{ field }} {{ field.errors }}</div>{% endfor %}
+          {% for field in form %}<div class="mb-3">{{ field.label_tag }} {{ field }}{% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="small text-muted mt-1">{{ field.help_text }}</p>{% endif %} {{ field.errors }}</div>{% endfor %}
           <button class="btn btn-primary" type="submit" name="action" value="save">Save preferences</button>
           {% if ready %}<button class="btn btn-outline-primary" type="submit" name="action" value="preview" formnovalidate>Preview job matches</button>{% endif %}
         </form>
@@ -29,7 +29,7 @@
         <p>We search Adzuna's UK vacancies, not every job on the internet. Search terms and location are sent to Adzuna; your full CV and contact details are not.</p>
         <p>We rank adverts using words shared with your selected CV. Matching is a guide, not a qualification check or a guarantee of suitability. Read each full advert before applying.</p>
         <p>Remote and hybrid filters require those arrangements to be mentioned in the advert. A minimum salary filters out adverts without a suitable stated salary, which may reduce results.</p>
-        <p>Only new matches are emailed. If there are no new matches, no digest is sent that week. You can change your preferences or unsubscribe at any time.</p>
+        <p>Only new matches are emailed. If there are no new matches, no email is sent for that daily or weekly check. You can change your frequency, update your preferences or unsubscribe at any time.</p>
         {% if preference.last_sent_at %}<p>Last digest: {{ preference.last_sent_at|date:"j M Y" }}</p>{% endif %}
       </div></aside>
     </div>

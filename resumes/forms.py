@@ -90,12 +90,13 @@ class JobAlertForm(forms.ModelForm):
     )
     work_preference = forms.ChoiceField(choices=[("any", "Any working arrangement"), ("remote", "Remote only"), ("hybrid", "Hybrid only")])
     minimum_salary = forms.IntegerField(required=False, min_value=0, max_value=1000000, label="Minimum annual salary (GBP)")
-    enabled = forms.BooleanField(required=False, label="Email me weekly job matches (up to five new jobs). I can unsubscribe at any time.")
+    enabled = forms.BooleanField(required=False, label="Email me job matches (up to five new jobs per email). I can unsubscribe at any time.")
 
     class Meta:
         model = JobAlertPreference
-        fields = ["cv", "target_role", "location", "radius_miles", "minimum_salary", "work_preference", "enabled"]
-        labels = {"cv": "CV to match against", "target_role": "Target job title", "location": "UK town, city or postcode"}
+        fields = ["cv", "target_role", "location", "radius_miles", "minimum_salary", "work_preference", "frequency", "enabled"]
+        labels = {"cv": "CV to match against", "target_role": "Target job title", "location": "UK town, city or postcode", "frequency": "Email frequency"}
+        help_texts = {"frequency": "Choose daily or weekly emails. Only new matches are sent; no email is sent when there are none."}
 
     def __init__(self, *args, user, **kwargs):
         self.user = user

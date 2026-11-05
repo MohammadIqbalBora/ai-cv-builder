@@ -1,4 +1,4 @@
-Your weekly job matches from AI CV Builder
+Your {{ frequency }} job matches from AI CV Builder
 
 These UK vacancies share words with your CV. Read the full adverts to check requirements and availability. Matching is not a guarantee of suitability.
 {% for job in jobs %}

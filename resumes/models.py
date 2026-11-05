@@ -135,7 +135,9 @@ class ApplicationPack(models.Model):
 
 
 class JobAlertPreference(models.Model):
-    """One explicit, revocable weekly job-alert subscription per account."""
+    """One explicit, revocable job-alert subscription per account."""
+
+    FREQUENCY_CHOICES = [("daily", "Daily"), ("weekly", "Weekly")]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     cv = models.ForeignKey(CV, on_delete=models.SET_NULL, null=True, blank=True)
@@ -144,6 +146,7 @@ class JobAlertPreference(models.Model):
     radius_miles = models.PositiveSmallIntegerField(default=25)
     minimum_salary = models.PositiveIntegerField(null=True, blank=True)
     work_preference = models.CharField(max_length=10, default="any")
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default="weekly")
     enabled = models.BooleanField(default=False)
     confirmed_email = models.EmailField(blank=True)
     confirmation_email = models.EmailField(blank=True)

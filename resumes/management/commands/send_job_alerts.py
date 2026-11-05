@@ -1,4 +1,4 @@
-"""Run daily; each confirmed subscriber is eligible at most once per week."""
+"""Run daily; send each confirmed subscriber's daily or weekly digest when due."""
 import logging
 from collections import Counter
 
@@ -6,14 +6,14 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from resumes.job_alert_service import alerts_ready, send_weekly_digest
+from resumes.job_alert_service import alerts_ready, send_job_digest
 from resumes.models import JobAlertPreference
 
 logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Send due weekly Premium job digests. Requires configured job API and SMTP."
+    help = "Send due daily or weekly Premium job digests. Requires configured job API and SMTP."
 
     def add_arguments(self, parser):
         parser.add_argument("--check", action="store_true", help="Check configuration without sending emails or searching.")
@@ -32,7 +32,7 @@ class Command(BaseCommand):
                 if not preference:
                     continue
                 try:
-                    outcome = send_weekly_digest(preference)
+                    outcome = send_job_digest(preference)
                     counts[outcome] += 1
                 except Exception:
                     preference.last_attempt_at = timezone.now()

@@ -40,11 +40,11 @@ Config Vars:
 ## End-to-end check before enabling for customers
 
 1. Configure the services, then enable alerts.
-2. With an account you control that has Premium access, open **Job alerts**, choose an owned CV and enter a UK role/location.
+2. With an account you control that has Premium access, open **Job alerts**, choose an owned CV, enter a UK role/location and choose **Daily** or **Weekly** emails. Existing preferences default to Weekly.
 3. Use **Preview job matches** to verify live API access. A preview does not subscribe the account or save preferences.
 4. Explicitly opt in and save preferences. A confirmation email is sent to the account address. Follow its link and confirm on the page.
 5. Run `python manage.py send_job_alerts` and confirm receipt, formatting, application links and provider attribution in that account's inbox.
-6. Run it again: no duplicate digest should be sent within seven days. Test the unsubscribe link (a confirmation page followed by POST), then verify another run sends nothing.
+6. Run it again: no duplicate digest should be sent within 24 hours for Daily or seven days for Weekly. Test both frequency choices and the unsubscribe link (a confirmation page followed by POST), then verify a paused subscription sends nothing.
 
 Do not send test digests to real customers. No live end-to-end API/email test was performed while credentials were unavailable.
 
@@ -56,11 +56,11 @@ Use Heroku Scheduler or an equivalent scheduler to run:
 python manage.py send_job_alerts
 ```
 
-Run **daily**; the command itself enforces a seven-day interval for each user. Heroku Scheduler's job times are UTC, and its one-off dynos consume usage. Configure the add-on and daily task in Heroku after deciding on that usage; it is not provisioned by this code. See https://devcenter.heroku.com/articles/scheduler.
+Run **daily**; the command itself enforces each user's selected interval: at least 24 hours for Daily or seven days for Weekly, measured from the last completed check. Delivery happens on the next scheduled run after that interval. Changing frequency uses the existing last-check timestamp; it does not trigger an immediate email or clear previously sent job IDs. Heroku Scheduler's job times are UTC, and its one-off dynos consume usage. Configure the add-on and daily task in Heroku after deciding on that usage; it is not provisioned by this code. See https://devcenter.heroku.com/articles/scheduler.
 
 Each run checks current Premium access, explicit opt-in, a valid owned CV and confirmed account email. A user whose selected CV was deleted must choose a new CV. Expired Premium accounts stop receiving digests automatically; pausing or deleting an account stops them too.
 
-The command locks a preference while processing it, so overlapping PostgreSQL worker runs skip a preference already being processed. It records provider job IDs after successful email submission and skips them in later digests, even if the selected CV is changed. An empty result advances the weekly check without sending an empty email. Failed searches/delivery wait 24 hours before retrying. One confirmation is sent automatically when a saved pending preference becomes eligible; repeated reminders are not sent automatically. A user can request a resend by saving preferences after 24 hours.
+The command locks a preference while processing it, so overlapping PostgreSQL worker runs skip a preference already being processed. It records provider job IDs after successful email submission and skips them in later digests, even if the selected CV or email frequency is changed. An empty result advances the daily or weekly check without sending an empty email. Failed searches/delivery wait 24 hours before retrying. One confirmation is sent automatically when a saved pending preference becomes eligible; repeated reminders are not sent automatically. A user can request a resend by saving preferences after 24 hours.
 
 SMTP submission and a database commit cannot be atomic: a process crash after accepted delivery but before commit can result in a repeated email on a later retry. For larger-scale or delivery-critical use, adopt a durable outbox and a provider supporting idempotent delivery. No exactly-once delivery is claimed.
 

@@ -10,7 +10,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .job_alert_service import alerts_ready, rank_jobs, search_jobs, send_confirmation, send_weekly_digest, JobSearchUnavailable
+from .job_alert_service import alerts_ready, rank_jobs, search_jobs, send_confirmation, send_job_digest, JobSearchUnavailable
 from .models import CV, JobAlertPreference, SentJobAlert, Subscription
 
 
@@ -36,7 +36,7 @@ class JobAlertTests(TestCase):
         self.job = {"id": "job-1", "title": "English Teacher", "description": "Plan English literature lessons and assessment in a hybrid role.", "company": {"display_name": "Example School"}, "location": {"display_name": "London"}, "salary_min": 40000, "redirect_url": "https://www.adzuna.co.uk/jobs/details/123"}
 
     def form_data(self, **updates):
-        data = {"cv": self.cv.pk, "target_role": "English teacher", "location": "London", "radius_miles": 25, "work_preference": "any", "enabled": "on"}
+        data = {"cv": self.cv.pk, "target_role": "English teacher", "location": "London", "radius_miles": 25, "work_preference": "any", "frequency": "weekly", "enabled": "on"}
         data.update(updates)
         return data
 
@@ -64,6 +64,31 @@ class JobAlertTests(TestCase):
         self.client.post(reverse("job_alert_preferences"), self.form_data(enabled=""))
         self.pref.refresh_from_db()
         self.assertFalse(self.pref.enabled)
+
+    def test_frequency_defaults_to_weekly_and_can_be_changed(self):
+        self.assertEqual(self.pref.frequency, "weekly")
+        self.assertContains(self.client.get(reverse("job_alert_preferences")), "Email frequency")
+        for frequency in ("daily", "weekly"):
+            response = self.client.post(reverse("job_alert_preferences"), self.form_data(frequency=frequency))
+            self.assertContains(response, "preferences have been saved")
+            self.pref.refresh_from_db()
+            self.assertEqual(self.pref.frequency, frequency)
+            self.assertContains(response, f'<option value="{frequency}" selected>')
+        response = self.client.post(reverse("job_alert_preferences"), self.form_data(frequency="hourly"))
+        self.assertContains(response, "Select a valid choice")
+        self.pref.refresh_from_db()
+        self.assertEqual(self.pref.frequency, "weekly")
+
+    @patch("resumes.job_alert_views.search_jobs")
+    def test_preview_does_not_save_frequency_or_enable_emails(self, search):
+        search.return_value = [self.job]
+        self.pref.enabled = False
+        self.pref.save()
+        self.client.post(reverse("job_alert_preferences"), self.form_data(action="preview", frequency="daily"))
+        self.pref.refresh_from_db()
+        self.assertEqual(self.pref.frequency, "weekly")
+        self.assertFalse(self.pref.enabled)
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_csrf_and_login_are_required_for_preferences(self):
         client = Client(enforce_csrf_checks=True)
@@ -117,37 +142,125 @@ class JobAlertTests(TestCase):
     @patch("resumes.job_alert_service.search_jobs")
     def test_weekly_digest_and_sent_job_deduplication(self, search):
         search.return_value = [self.job]
-        self.assertEqual(send_weekly_digest(self.pref), "sent")
+        self.assertEqual(send_job_digest(self.pref), "sent")
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.user.email])
+        self.assertIn("weekly", mail.outbox[0].subject)
         self.assertIn(self.job["redirect_url"], mail.outbox[0].body)
         self.assertIn("Adzuna", mail.outbox[0].body)
         self.assertIn("Stop job alert emails", mail.outbox[0].body)
         self.assertEqual(SentJobAlert.objects.count(), 1)
-        self.assertEqual(send_weekly_digest(self.pref), "skipped")
+        self.assertEqual(send_job_digest(self.pref), "skipped")
         self.pref.last_checked_at = timezone.now() - timedelta(days=8)
         self.pref.last_attempt_at = timezone.now() - timedelta(days=8)
         self.pref.save()
-        self.assertEqual(send_weekly_digest(self.pref), "no_matches")
+        self.assertEqual(send_job_digest(self.pref), "no_matches")
         self.assertEqual(len(mail.outbox), 1)
+
+    @patch("resumes.job_alert_service.search_jobs")
+    def test_daily_digest_waits_24_hours_and_sends_only_new_jobs(self, search):
+        self.pref.frequency = "daily"
+        self.pref.save()
+        start = timezone.now()
+        search.return_value = [self.job]
+        with patch("resumes.job_alert_service.timezone.now", return_value=start):
+            self.assertEqual(send_job_digest(self.pref), "sent")
+        message = mail.outbox[0]
+        self.assertIn("Your daily job matches", message.subject)
+        self.assertIn("Your daily job matches", message.body)
+        self.assertIn("Your daily job matches", message.alternatives[0].content)
+        search.reset_mock()
+        with patch("resumes.job_alert_service.timezone.now", return_value=start + timedelta(hours=24) - timedelta(seconds=1)):
+            self.assertEqual(send_job_digest(self.pref), "skipped")
+        search.assert_not_called()
+        search.return_value = [self.job, dict(self.job, id="job-2", title="New English Teacher")]
+        with patch("resumes.job_alert_service.timezone.now", return_value=start + timedelta(hours=24)):
+            self.assertEqual(send_job_digest(self.pref), "sent")
+            self.assertEqual(send_job_digest(self.pref), "skipped")
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertIn("New English Teacher", mail.outbox[1].body)
+        self.assertEqual(SentJobAlert.objects.count(), 2)
+
+    @patch("resumes.job_alert_service.search_jobs", return_value=[])
+    def test_daily_and_weekly_empty_checks_respect_exact_intervals(self, search):
+        now = timezone.now()
+        for frequency, days in (("daily", 1), ("weekly", 7)):
+            with self.subTest(frequency=frequency):
+                self.pref.frequency = frequency
+                self.pref.last_checked_at = now - timedelta(days=days) + timedelta(seconds=1)
+                self.pref.last_attempt_at = self.pref.last_checked_at
+                self.pref.save()
+                search.reset_mock()
+                with patch("resumes.job_alert_service.timezone.now", return_value=now):
+                    self.assertEqual(send_job_digest(self.pref), "skipped")
+                search.assert_not_called()
+                with patch("resumes.job_alert_service.timezone.now", return_value=now + timedelta(seconds=1)):
+                    self.assertEqual(send_job_digest(self.pref), "no_matches")
+                    self.assertEqual(send_job_digest(self.pref), "skipped")
+                self.pref.refresh_from_db()
+                self.assertEqual(self.pref.last_checked_at, now + timedelta(seconds=1))
+        self.assertEqual(len(mail.outbox), 0)
+
+    @patch("resumes.job_alert_service.search_jobs")
+    def test_switching_frequency_uses_last_check_and_preserves_sent_ids(self, search):
+        now = timezone.now()
+        self.pref.last_checked_at = now - timedelta(days=2)
+        self.pref.last_attempt_at = self.pref.last_checked_at
+        self.pref.save()
+        SentJobAlert.objects.create(preference=self.pref, provider_job_id=self.job["id"])
+        search.return_value = [self.job]
+        self.client.post(reverse("job_alert_preferences"), self.form_data(frequency="daily"))
+        self.pref.refresh_from_db()
+        with patch("resumes.job_alert_service.timezone.now", return_value=now):
+            self.assertEqual(send_job_digest(self.pref), "no_matches")
+        self.assertEqual(SentJobAlert.objects.count(), 1)
+        self.client.post(reverse("job_alert_preferences"), self.form_data(frequency="weekly"))
+        self.pref.refresh_from_db()
+        search.reset_mock()
+        with patch("resumes.job_alert_service.timezone.now", return_value=now + timedelta(days=2)):
+            self.assertEqual(send_job_digest(self.pref), "skipped")
+        search.assert_not_called()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_daily_confirmation_email_and_page_use_selected_frequency(self):
+        self.pref.frequency = "daily"
+        self.pref.confirmed_email = ""
+        self.pref.save()
+        self.assertTrue(send_confirmation(self.pref))
+        self.assertIn("requested daily job alerts", mail.outbox[0].body)
+        url = reverse("confirm_job_alerts", args=[self.pref.email_token])
+        self.assertContains(self.client.get(url), "daily job-match emails")
+        self.assertContains(self.client.post(url), "daily job alerts are enabled")
+
+    @patch("resumes.job_alert_service.search_jobs")
+    def test_worker_sends_daily_preferences_before_weekly_interval(self, search):
+        self.pref.frequency = "daily"
+        self.pref.last_checked_at = timezone.now() - timedelta(days=2)
+        self.pref.last_attempt_at = self.pref.last_checked_at
+        self.pref.save()
+        search.return_value = [self.job]
+        call_command("send_job_alerts", stdout=StringIO())
+        call_command("send_job_alerts", stdout=StringIO())
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("daily", mail.outbox[0].subject)
 
     @patch("resumes.job_alert_service.search_jobs")
     def test_inactive_paused_expired_or_deleted_cv_sends_nothing(self, search):
         self.sub.is_active = False
         self.sub.save()
-        self.assertEqual(send_weekly_digest(self.pref), "skipped")
+        self.assertEqual(send_job_digest(self.pref), "skipped")
         self.sub.is_active = True
         self.sub.cancel_at_period_end = True
         self.sub.premium_until = timezone.now() - timedelta(days=1)
         self.sub.save()
         self.pref = JobAlertPreference.objects.get(pk=self.pref.pk)
-        self.assertEqual(send_weekly_digest(self.pref), "skipped")
+        self.assertEqual(send_job_digest(self.pref), "skipped")
         self.pref.enabled = False
-        self.assertEqual(send_weekly_digest(self.pref), "skipped")
+        self.assertEqual(send_job_digest(self.pref), "skipped")
         self.cv.delete()
         self.pref.refresh_from_db()
         self.assertIsNone(self.pref.cv)
-        self.assertEqual(send_weekly_digest(self.pref), "skipped")
+        self.assertEqual(send_job_digest(self.pref), "skipped")
         search.assert_not_called()
 
     def test_email_confirmation_required_and_get_is_read_only(self):

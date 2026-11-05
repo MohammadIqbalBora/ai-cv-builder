@@ -69,7 +69,9 @@ def confirm_email(request, token):
         preference.confirmed_email = preference.user.email
         preference.save(update_fields=["confirmed_email"])
         done = True
-    return render(request, "job_alert_confirmation.html", {"valid": valid, "done": done})
+    return render(request, "job_alert_confirmation.html", {
+        "valid": valid, "done": done, "frequency": preference.get_frequency_display().lower(),
+    })
 
 
 @require_http_methods(["GET", "POST"])

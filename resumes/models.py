@@ -7,6 +7,8 @@ from django.contrib.auth.models import User
 # Django model fields describe database columns and relationships.
 from django.db import models
 
+from .validators import validate_additional_sections
+
 
 # Each CV instance becomes one row in the resumes_cv database table.
 class CV(models.Model):
@@ -33,6 +35,7 @@ class CV(models.Model):
     skills = models.TextField(blank=True, null=True)
     experience = models.TextField(blank=True, null=True)
     education = models.TextField(blank=True, null=True)
+    additional_sections = models.JSONField(default=list, blank=True, validators=[validate_additional_sections])
 
     # Store the uploaded file path; the file itself goes under media/cv_uploads/.
     uploaded_file = models.FileField(

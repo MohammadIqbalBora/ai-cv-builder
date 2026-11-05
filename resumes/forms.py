@@ -5,11 +5,19 @@ from django import forms
 
 # The ModelForm below creates or updates this database model.
 from .models import CV, JobAlertPreference
+from .validators import validate_additional_sections
+from .widgets import AdditionalSectionsWidget
 
 
 # ModelForm converts selected CV model fields into HTML form fields.
 class CVForm(forms.ModelForm):
     """Form for creating and editing CV records."""
+
+    additional_sections = forms.Field(
+        required=False,
+        widget=AdditionalSectionsWidget,
+        validators=[validate_additional_sections],
+    )
 
     # Meta connects this form class to its model and controls exposed fields.
     # class Meta: is basically a configuration section inside your CVForm class. It tells Django which model this form belongs to and which fields from that model should be included.
@@ -28,6 +36,7 @@ class CVForm(forms.ModelForm):
             "skills",
             "experience",
             "education",
+            "additional_sections",
             "uploaded_file",
             "template",
         ]

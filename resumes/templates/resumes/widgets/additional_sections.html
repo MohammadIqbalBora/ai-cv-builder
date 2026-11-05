@@ -1,0 +1,22 @@
+<div data-additional-sections>
+  <datalist id="{{ widget.attrs.id }}_suggestions">
+    <option value="Interests and hobbies"></option>
+    <option value="Professional memberships"></option>
+    <option value="Certifications"></option>
+    <option value="Languages"></option>
+    <option value="Volunteering"></option>
+    <option value="Projects"></option>
+  </datalist>
+  <div data-section-list>
+    {% for section in widget.sections %}
+      {% include "resumes/widgets/additional_section_row.html" %}
+    {% endfor %}
+  </div>
+  <template data-section-template>
+    {% include "resumes/widgets/additional_section_row.html" with section=None %}
+  </template>
+  <button type="button" class="btn btn-outline-primary" data-add-section hidden>
+    <i class="bi bi-plus-circle"></i> Add section
+  </button>
+  <p class="text-muted small mt-2 mb-0" role="status" data-section-status></p>
+</div>

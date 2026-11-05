@@ -77,10 +77,16 @@ def draw_section(pdf, title, text, x, y, max_width, title_color="#2563eb"):
     if not text:
         return y
 
+    if y < 110:
+        y = new_page_if_needed(pdf, 0, 842)
+
     # Draw a colored uppercase heading followed by a horizontal divider.
     pdf.setFillColor(colors.HexColor(title_color))
     pdf.setFont("Helvetica-Bold", 13)
-    pdf.drawString(x, y, title.upper())
+    y = draw_wrapped_text(
+        pdf, title.upper(), x, y, max_width,
+        font_name="Helvetica-Bold", font_size=13, line_height=16,
+    ) + 16
 
     y -= 8
     pdf.setStrokeColor(colors.HexColor("#d1d5db"))
@@ -114,6 +120,13 @@ def draw_section(pdf, title, text, x, y, max_width, title_color="#2563eb"):
         y -= 4
 
     return y - 10
+
+
+def draw_additional_sections(pdf, cv, x, y, max_width, title_color="#2563eb"):
+    """Use the same section styling and pagination for user-defined content."""
+    for section in cv.additional_sections:
+        y = draw_section(pdf, section["title"], section["content"], x, y, max_width, title_color)
+    return y
 
 
 def draw_bullets(pdf, text, x, y, max_width, font_size=9, line_height=12):

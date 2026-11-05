@@ -1,0 +1,11 @@
+<div class="additional-section border rounded-3 p-3 mb-3">
+  <label class="d-block mb-3">
+    Section heading
+    <input type="text" name="{{ widget.name }}_title" value="{{ section.title }}" maxlength="80" list="{{ widget.attrs.id }}_suggestions" class="form-control" placeholder="e.g. Interests and hobbies">
+  </label>
+  <label class="d-block mb-3">
+    Details
+    <textarea name="{{ widget.name }}_content" maxlength="5000" rows="4" class="form-control" placeholder="Add the information you want included in your CV.">{{ section.content }}</textarea>
+  </label>
+  <button type="button" class="btn btn-outline-danger btn-sm" data-remove-section>Remove section</button>
+</div>

@@ -27,6 +27,7 @@
 
   <h4>Education</h4>
   <p>{{ cv.education }}</p>
+  {% include "includes/additional_cv_sections.html" %}
 </div>
 
 {% elif cv.template == "classic" %}
@@ -48,6 +49,7 @@
 
   <h3>Skills</h3>
   <p>{{ cv.skills }}</p>
+  {% include "includes/additional_cv_sections.html" %}
 </div>
 
 {% elif cv.template == "executive" %}
@@ -78,6 +80,7 @@
 
   <h4>Education</h4>
   <p>{{ cv.education }}</p>
+  {% include "includes/additional_cv_sections.html" %}
 </div>
 
 {% endif %}

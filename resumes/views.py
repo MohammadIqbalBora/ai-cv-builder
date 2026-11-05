@@ -197,6 +197,14 @@ def create_cv(request):
                 form.add_error("uploaded_file", "Please upload a PDF or DOCX file.")
                 return render(request, "create_cv.html", {"form": form})
 
+            # Preserve manually entered extra sections when importing a CV.
+            from django.core.exceptions import ValidationError
+            try:
+                additional_sections = form.fields["additional_sections"].clean(form["additional_sections"].data)
+            except ValidationError as error:
+                form.add_error("additional_sections", error)
+                return render(request, "create_cv.html", {"form": form})
+
             # Extract directly from the upload before saving any database record.
             try:
                 from .cv_parser import extract_text_from_pdf, extract_text_from_docx
@@ -221,6 +229,7 @@ def create_cv(request):
                 full_name="",
                 uploaded_file=uploaded_file,
                 template=template,
+                additional_sections=additional_sections,
             )
             import_data_into_cv(cv, parsed_data)
 
@@ -855,6 +864,7 @@ Education: {cv.education}
             skills=tailored_data.get("skills") or cv.skills,
             experience=tailored_data.get("experience") or cv.experience,
             education=tailored_data.get("education") or cv.education,
+            additional_sections=cv.additional_sections,
             template=cv.template,
             original_content={name: getattr(cv, name) or "" for name in TailoredCVReviewForm.Meta.fields},
         )

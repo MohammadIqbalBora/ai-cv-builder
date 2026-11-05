@@ -303,9 +303,9 @@ body:has(.dashboard-page) .page-shell {
 .dashboard-page {
     display: grid;
     grid-template-columns: 260px 260px minmax(0, 1fr);
-    width: 90vw;
-    max-width: 1600px;
-    margin: 20px auto;
+    width: 100%;
+    max-width: none;
+    margin: 20px 0;
     height: calc(100vh - 116px);
     overflow: hidden;
 }
@@ -1259,7 +1259,6 @@ footer {
 ====================================================== */
 @media (max-width: 1200px) {
     .dashboard-page {
-        width: 96vw;
         grid-template-columns: 220px 220px minmax(0, 1fr);
     }
 

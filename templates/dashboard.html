@@ -96,9 +96,7 @@
         <p class="preserve-lines">{{ selected_letter.content }}</p>
       </div>
       <div class="dashboard-toolbar">
-        <a href="{% url 'dashboard' %}?cv={{ selected_letter.cv_id }}" class="btn btn-outline-primary btn-sm">View CV</a>
         <a href="{% url 'download_cover_letter_pdf' selected_letter.cv_id %}?letter={{ selected_letter.id }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-pdf-fill"></i> Download PDF</a>
-        <a href="{% url 'create_cover_letter' selected_letter.cv_id %}?letter={{ selected_letter.id }}" class="btn btn-info btn-sm">Generate New Cover Letter</a>
       </div>
     </section>
     {% else %}

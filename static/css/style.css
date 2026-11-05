@@ -635,6 +635,13 @@ body:has(.dashboard-page) .page-shell {
 /* ======================================================
    CV FORM / CREATE CV / EDIT CV
 ====================================================== */
+.additional-section-actions:not([hidden]) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    max-width: 400px;
+}
+
 .cv-form-page {
     padding: 8px 0 32px;
     max-width: 1450px;

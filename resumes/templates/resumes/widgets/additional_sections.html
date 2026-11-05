@@ -15,8 +15,13 @@
   <template data-section-template>
     {% include "resumes/widgets/additional_section_row.html" with section=None %}
   </template>
-  <button type="button" class="btn btn-outline-primary" data-add-section hidden>
-    <i class="bi bi-plus-circle"></i> Add section
-  </button>
+  <div class="additional-section-actions" data-section-actions hidden>
+    <button type="button" class="btn btn-outline-primary" data-add-section>
+      <i class="bi bi-plus-circle"></i> Add section
+    </button>
+    <button type="button" class="btn btn-outline-danger" data-remove-section title="Remove the last section">
+      <i class="bi bi-dash-circle"></i> Remove section
+    </button>
+  </div>
   <p class="text-muted small mt-2 mb-0" role="status" data-section-status></p>
 </div>

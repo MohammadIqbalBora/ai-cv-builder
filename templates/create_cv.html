@@ -286,14 +286,16 @@ base.html. block content defines the section where that individual page inserts 
   document.querySelectorAll("[data-additional-sections]").forEach((editor) => {
     const list = editor.querySelector("[data-section-list]");
     const addButton = editor.querySelector("[data-add-section]");
+    const removeButton = editor.querySelector("[data-remove-section]");
     const template = editor.querySelector("[data-section-template]");
     const status = editor.querySelector("[data-section-status]");
     const update = () => {
       const count = list.children.length;
       addButton.disabled = count >= 10;
+      removeButton.disabled = count === 0;
       status.textContent = count >= 10 ? "Maximum of 10 sections reached." : "";
     };
-    addButton.hidden = false;
+    editor.querySelector("[data-section-actions]").hidden = false;
     addButton.addEventListener("click", () => {
       if (list.children.length >= 10) return;
       const row = template.content.cloneNode(true);
@@ -301,14 +303,11 @@ base.html. block content defines the section where that individual page inserts 
       list.lastElementChild.querySelector("input").focus();
       update();
     });
-    list.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-remove-section]");
-      if (!button) return;
-      const row = button.closest(".additional-section");
-      const next = row.nextElementSibling || row.previousElementSibling;
-      row.remove();
-      (next ? next.querySelector("input") : addButton).focus();
+    removeButton.addEventListener("click", () => {
+      if (!list.lastElementChild) return;
+      list.lastElementChild.remove();
       update();
+      if (removeButton.disabled) addButton.focus();
     });
     update();
   });

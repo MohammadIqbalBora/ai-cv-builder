@@ -50,6 +50,22 @@ class SavedCoverLetterTests(TestCase):
         self.cv.delete()
         self.assertContains(self.client.get(reverse("dashboard")), "No CVs Yet")
 
+    def test_edit_letter_saves_and_returns_to_dashboard(self):
+        letter = CoverLetter.objects.create(user=self.user, cv=self.cv, content="Original letter", job_description="Role")
+        url = reverse("edit_cover_letter", args=[letter.pk])
+        self.assertContains(self.client.get(url), "Original letter")
+        response = self.client.post(url, {"content": "Updated letter"})
+        self.assertRedirects(response, reverse("dashboard") + f"?letter={letter.pk}#dashboard-preview")
+        letter.refresh_from_db()
+        self.assertEqual(letter.content, "Updated letter")
+        self.assertEqual(letter.job_description, "Role")
+        self.client.post(url, {"content": "   "})
+        letter.refresh_from_db()
+        self.assertEqual(letter.content, "Updated letter")
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.post(url, {"content": "Unauthorized"}).status_code, 404)
+
     def test_dashboard_displays_selected_letter_and_source_cv(self):
         letter = CoverLetter.objects.create(user=self.user, cv=self.cv, content="Dear team,\nMy saved application.", job_description="Role")
         CV.objects.create(user=self.user, full_name="Another CV")

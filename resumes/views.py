@@ -22,6 +22,7 @@ from django.http import HttpResponse
 
 # Load owned objects safely, redirect by route name, and render templates.
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 # Stripe cannot send a browser CSRF token, so its signed endpoint is exempt.
 from django.views.decorators.csrf import csrf_exempt
@@ -32,7 +33,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 # Import local business logic, parsing, forms, database models, and PDF designs.
 from .ai_service import AIService
 from .cv_parser import extract_text_from_cv, parse_cv_text
-from .forms import CVForm, TailoredCVReviewForm
+from .forms import CVForm, CoverLetterForm, TailoredCVReviewForm
 from .job_matching import (
     MIN_TAILOR_MATCH_SCORE, cv_matching_text, job_match_context,
     match_fingerprint, normalise_analysis,
@@ -362,6 +363,16 @@ Education: {cv.education}
     improved_cv = ai.improve_cv(cv_text)
 
     return render(request, "improve_cv.html", {"cv": cv, "improved_cv": improved_cv})
+
+
+@login_required
+def edit_cover_letter(request, id):
+    letter = get_object_or_404(CoverLetter, pk=id, user=request.user)
+    form = CoverLetterForm(request.POST if request.method == "POST" else None, instance=letter)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect(f"{reverse('dashboard')}?letter={letter.pk}#dashboard-preview")
+    return render(request, "edit_cover_letter.html", {"form": form, "letter": letter})
 
 
 @login_required

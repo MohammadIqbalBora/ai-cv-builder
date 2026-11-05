@@ -457,14 +457,7 @@ def create_cover_letter(request, id):
 
         ai = AIService()
 
-        cv_text = f"""
-Name: {cv.full_name}
-Job Title: {cv.job_title}
-Summary: {cv.professional_summary}
-Skills: {cv.skills}
-Experience: {cv.experience}
-"""
-
+        cv_text = cv_matching_text(cv)
         cover_letter = ai.generate_cover_letter(cv_text, job_description)
         saved_letter = CoverLetter.objects.create(
             user=request.user, cv=cv, job_description=job_description, content=cover_letter

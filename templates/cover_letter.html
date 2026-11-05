@@ -56,20 +56,10 @@
         </p>
       </form>
 
-      <hr class="my-4" />
-
       {% if cover_letter %}
+      <hr class="my-4" />
       <div class="letter-output {% if watermarked_documents %}free-document{% endif %}">
         <pre>{{ cover_letter }}</pre>
-      </div>
-      {% else %}
-      <div class="empty-letter">
-        <i class="bi bi-envelope-open"></i>
-        <h4>No cover letter generated yet</h4>
-        <p>
-          Paste a job description and click generate to create a tailored cover
-          letter.
-        </p>
       </div>
       {% endif %}
 

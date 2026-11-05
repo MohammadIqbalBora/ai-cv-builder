@@ -119,6 +119,22 @@ class SavedCoverLetterTests(TestCase):
 
 class ProfessionAwarePromptTests(TestCase):
     @patch("resumes.ai_service.OpenAI")
+    def test_cover_letter_separates_job_requirements_from_candidate_skills(self, client):
+        from resumes.ai_service import AIService
+        client.return_value.chat.completions.create.return_value.choices[0].message.content = "Letter"
+        cv = "Name: Example Candidate\nSkills: Python, Django, JavaScript"
+        job = "Software developer required. Must have C/C++ expertise."
+        AIService().generate_cover_letter(cv, job)
+        messages = client.return_value.chat.completions.create.call_args.kwargs["messages"]
+        self.assertIn("Job requirements are not evidence", messages[0]["content"])
+        prompt = messages[1]["content"]
+        self.assertIn(cv, prompt)
+        self.assertIn(job, prompt)
+        self.assertIn("Do not claim the candidate has a skill just because", prompt)
+        self.assertIn("Python or JavaScript experience does not establish C or C++ skills", prompt)
+        self.assertIn('Avoid words such as "aspiring"', prompt)
+
+    @patch("resumes.ai_service.OpenAI")
     def test_teacher_tailoring_uses_target_profession_and_preserves_evidence(self, client):
         from resumes.ai_service import AIService
 

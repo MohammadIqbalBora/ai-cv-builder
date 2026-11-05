@@ -189,7 +189,8 @@ class AIService:
                     "role": "system",
                     "content": (
                         "You are a professional CV writer and recruiter. "
-                        "Return valid JSON only. Every value must be plain text."
+                        "Return valid JSON only. Standard fields must be plain text; "
+                        "additional_sections must be an array of objects with title and content strings."
                     ),
                 },
                 {
@@ -219,10 +220,17 @@ professional_summary
 skills
 experience
 education
+additional_sections
 
 Rules:
-- Every value must be a plain text string.
-- Do not return lists, arrays or dictionaries.
+- Standard fields must be plain text strings.
+- additional_sections must be an array of objects with "title" and "content" strings.
+- Preserve Projects, memberships, interests, languages, volunteering, awards and other
+  sections outside the standard fields in additional_sections.
+- Preserve all project names, technologies, descriptions and achievements from the source.
+- Do not merge Projects into work experience or education. Do not omit extra sections.
+- Return an empty array for additional_sections if none are present.
+- Include at most 10 extra sections, with titles up to 80 characters and content up to 5000 characters.
 - Do not include markdown.
 - If a field is missing, return an empty string.
 - Address must be empty if no address is found.

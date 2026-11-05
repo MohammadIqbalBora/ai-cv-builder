@@ -32,7 +32,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 # Import local business logic, parsing, forms, database models, and PDF designs.
 from .ai_service import AIService
-from .cv_parser import extract_text_from_cv, parse_cv_text
+from .cv_parser import extract_text_from_cv, extract_additional_sections, parse_cv_text
 from .forms import CVForm, CoverLetterForm, TailoredCVReviewForm
 from .job_matching import (
     MIN_TAILOR_MATCH_SCORE, cv_matching_text, job_match_context,
@@ -41,6 +41,7 @@ from .job_matching import (
 from .models import CV, CoverLetter, Subscription, FreeDownloadUsage, ApplicationPack
 from .payments import fulfil_application_pack
 from .watermarks import watermark_pdf_response
+from .validators import merge_additional_sections
 from .pdf_templates import (
     render_classic_pdf,
     render_executive_pdf,
@@ -135,7 +136,21 @@ def parse_cv_with_ai_or_fallback(extracted_text):
         if not isinstance(data, dict):
             raise ValueError("CV parser must return a dictionary")
         from .ai_service import make_plain_text
-        return {key: make_plain_text(value) for key, value in data.items()}
+        from .validators import validate_additional_sections
+        sections = data.get("additional_sections", [])
+        validate_additional_sections(sections)
+        titles = {section["title"].strip().casefold() for section in sections}
+        for section in extract_additional_sections(extracted_text):
+            if section["title"].casefold() not in titles:
+                sections.append(section)
+        validate_additional_sections(sections)
+        result = {key: make_plain_text(value) for key, value in data.items() if key != "additional_sections"}
+        fallback = parse_cv_text(extracted_text)
+        for key, value in fallback.items():
+            if key != "additional_sections" and not result.get(key):
+                result[key] = value
+        result["additional_sections"] = sections
+        return result
     except Exception:
         logger.warning("AI CV parsing failed; using local parsing", exc_info=True)
         return parse_cv_text(extracted_text)
@@ -158,6 +173,10 @@ def import_data_into_cv(cv, parsed_data):
     cv.skills = parsed_data.get("skills") or cv.skills
     cv.experience = parsed_data.get("experience") or cv.experience
     cv.education = parsed_data.get("education") or cv.education
+
+    cv.additional_sections = merge_additional_sections(
+        cv.additional_sections or [], parsed_data.get("additional_sections", [])
+    )
 
     # Persist all assignments in one database update.
     cv.save()
@@ -232,6 +251,13 @@ def create_cv(request):
                 return render(request, "create_cv.html", {"form": form})
 
             parsed_data = parse_cv_with_ai_or_fallback(extracted_text)
+            try:
+                additional_sections = merge_additional_sections(
+                    additional_sections, parsed_data.get("additional_sections", [])
+                )
+            except ValidationError as error:
+                form.add_error("additional_sections", error)
+                return render(request, "create_cv.html", {"form": form})
             uploaded_file.seek(0)
             template = request.POST.get("template", "modern")
             if template not in dict(CV.TEMPLATE_CHOICES):
@@ -768,7 +794,14 @@ def import_uploaded_cv(request, id):
         if request.method == "POST":
             parsed_data = parse_cv_with_ai_or_fallback(extracted_text)
 
-            import_data_into_cv(cv, parsed_data)
+            from django.core.exceptions import ValidationError
+            try:
+                import_data_into_cv(cv, parsed_data)
+            except ValidationError as error:
+                return render(request, "import_cv.html", {
+                    "cv": cv, "extracted_text": extracted_text,
+                    "error": " ".join(error.messages),
+                }, status=400)
 
             return redirect("edit_cv", id=cv.id)
 

@@ -6,6 +6,7 @@
 {% block content %}
 
 <div class="import-page">
+  {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
   <div class="import-header mb-5">
     <div>
       <span class="badge bg-primary mb-3">CV Import</span>

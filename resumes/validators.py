@@ -6,6 +6,21 @@ MAX_SECTION_TITLE = 80
 MAX_SECTION_CONTENT = 5000
 
 
+def merge_additional_sections(existing, imported):
+    """Merge imported sections while retaining manually entered headings."""
+    validate_additional_sections(existing)
+    validate_additional_sections(imported)
+    sections = list(existing)
+    titles = {section["title"].strip().casefold() for section in sections}
+    for section in imported:
+        title = section["title"].strip().casefold()
+        if title not in titles:
+            sections.append(section)
+            titles.add(title)
+    validate_additional_sections(sections)
+    return sections
+
+
 def validate_additional_sections(value):
     """Keep user-defined CV sections small and consistently structured."""
     if not isinstance(value, list):

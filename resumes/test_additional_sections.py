@@ -20,6 +20,20 @@ from .models import CV, Subscription
     },
 )
 class AdditionalSectionsTests(TestCase):
+    PROJECT_TEXT = """Example Candidate
+Education
+Web Development Bootcamp
+Projects
+AI CV Builder | Django | PostgreSQL | OpenAI API
+• Built and deployed a CV application.
+• Integrated Stripe subscription payments.
+Currency & Weather Hub | JavaScript | REST APIs
+• Used Fetch API to update content dynamically.
+Halal Bites | HTML5 | CSS3 | Bootstrap
+• Added a contact form and embedded location map.
+Languages
+English
+"""
     def setUp(self):
         self.user = User.objects.create_user(username="extra-sections-owner")
         Subscription.objects.create(user=self.user, is_active=True, plan_name="Premium")
@@ -36,6 +50,114 @@ class AdditionalSectionsTests(TestCase):
             "additional_sections_title": [section["title"] for section in sections],
             "additional_sections_content": [section["content"] for section in sections],
         }
+
+    @patch("resumes.views.AIService")
+    def test_uploaded_docx_recovers_projects_omitted_by_ai(self, ai):
+        from docx import Document
+        from django.utils.html import escape
+        ai.return_value.parse_uploaded_cv.return_value = {"full_name": "Example Candidate"}
+        document = Document()
+        for line in self.PROJECT_TEXT.splitlines():
+            document.add_paragraph(line)
+        stream = BytesIO()
+        document.save(stream)
+        with TemporaryDirectory() as directory, override_settings(MEDIA_ROOT=directory):
+            response = self.client.post(reverse("create_cv"), {
+                "action": "import",
+                "uploaded_file": SimpleUploadedFile("cv.docx", stream.getvalue()),
+            })
+            cv = CV.objects.get(user=self.user)
+            self.assertRedirects(response, reverse("edit_cv", args=[cv.pk]))
+            projects = next(section for section in cv.additional_sections if section["title"] == "Projects")
+            for name in ["AI CV Builder", "Currency & Weather Hub", "Halal Bites"]:
+                self.assertIn(name, projects["content"])
+                self.assertContains(self.client.get(reverse("dashboard")), escape(name))
+            for template, _ in CV.TEMPLATE_CHOICES:
+                with self.subTest(template=template):
+                    pdf = self.client.get(reverse("download_cv_pdf", args=[cv.pk]), {"template": template})
+                    self.assertEqual(pdf.status_code, 200)
+                    text = "\n".join(page.extract_text() for page in PdfReader(BytesIO(pdf.content)).pages)
+                    self.assertIn("projects", text.casefold())
+                    for name in ["AI CV Builder", "Currency & Weather Hub", "Halal Bites"]:
+                        self.assertIn(name, text)
+
+    @patch("resumes.views.AIService")
+    def test_fallback_preserves_projects_separately_from_education(self, ai):
+        from resumes.views import parse_cv_with_ai_or_fallback
+        ai.return_value.parse_uploaded_cv.side_effect = RuntimeError("Unavailable")
+        data = parse_cv_with_ai_or_fallback(self.PROJECT_TEXT)
+        self.assertEqual(data["education"], "Web Development Bootcamp")
+        self.assertEqual(data["additional_sections"][0]["title"], "Projects")
+        self.assertIn("Halal Bites", data["additional_sections"][0]["content"])
+        self.assertNotIn("English", data["additional_sections"][0]["content"])
+
+    def test_word_tables_are_extracted_in_document_order(self):
+        from docx import Document
+        from resumes.cv_parser import extract_text_from_docx
+        document = Document()
+        document.add_paragraph("Example Candidate")
+        table = document.add_table(rows=2, cols=1)
+        table.cell(0, 0).text = "Professional Memberships"
+        table.cell(1, 0).text = "Member of Example Institute"
+        document.add_paragraph("Achievements")
+        document.add_paragraph("Completed an accessibility improvement project")
+        stream = BytesIO()
+        document.save(stream)
+        stream.seek(0)
+        self.assertEqual(extract_text_from_docx(stream).splitlines(), [
+            "Example Candidate", "Professional Memberships", "Member of Example Institute",
+            "Achievements", "Completed an accessibility improvement project",
+        ])
+
+    def test_other_sections_and_heading_variants_survive_all_pdf_templates(self):
+        from resumes.cv_parser import parse_cv_text
+        from resumes.views import import_data_into_cv
+        extra = [
+            ("Achievements", "Improved accessibility"),
+            ("Professional Memberships", "Member of Example Institute"),
+            ("Voluntary Work", "Community support volunteer"),
+            ("Languages", "English and French"),
+            ("Awards", "Service award recipient"),
+            ("Publications", "Published research article"),
+            ("Interests & Hobbies", "Hiking and photography"),
+            ("References", "Available on request"),
+        ]
+        text = "\n".join([
+            "Example Candidate", "Professional Summary:", "Experienced developer",
+            "Key Skills", "Python and Django", "Career History", "Software Developer at Example",
+            "Qualifications", "Web Development Diploma", "Certifications", "Cloud Practitioner Certificate",
+        ] + [line for section in extra for line in section])
+        data = parse_cv_text(text)
+        self.assertEqual(data["professional_summary"], "Experienced developer")
+        self.assertEqual(data["skills"], "Python and Django")
+        self.assertEqual(data["experience"], "Software Developer at Example")
+        self.assertIn("Web Development Diploma", data["education"])
+        self.assertIn("Cloud Practitioner Certificate", data["education"])
+        self.assertEqual(data["additional_sections"], [{"title": title, "content": content} for title, content in extra])
+        cv = CV.objects.create(user=self.user, full_name="Example Candidate")
+        import_data_into_cv(cv, data)
+        for template, _ in CV.TEMPLATE_CHOICES:
+            with self.subTest(template=template):
+                response = self.client.get(reverse("download_cv_pdf", args=[cv.pk]), {"template": template})
+                self.assertEqual(response.status_code, 200)
+                pdf_text = "\n".join(page.extract_text() for page in PdfReader(BytesIO(response.content)).pages)
+                for title, content in extra:
+                    self.assertIn(title.casefold(), pdf_text.casefold())
+                    self.assertIn(content, pdf_text)
+                self.assertIn("Web Development Diploma", pdf_text)
+                self.assertIn("Cloud Practitioner Certificate", pdf_text)
+
+    @patch("resumes.views.AIService")
+    def test_ai_sections_stay_structured_and_manual_sections_take_precedence(self, ai):
+        from resumes.views import parse_cv_with_ai_or_fallback, import_data_into_cv
+        ai.return_value.parse_uploaded_cv.return_value = {"additional_sections": self.sections}
+        data = parse_cv_with_ai_or_fallback("Example Candidate")
+        self.assertEqual(data["additional_sections"], self.sections)
+        manual = {"title": "Interests and hobbies", "content": "Reading"}
+        cv = CV.objects.create(user=self.user, full_name="Example", additional_sections=[manual])
+        import_data_into_cv(cv, data)
+        cv.refresh_from_db()
+        self.assertEqual(cv.additional_sections, [manual, self.sections[1]])
 
     def test_create_edit_remove_and_reload(self):
         self.assertContains(self.client.get(reverse("create_cv")), "Add section")

@@ -119,8 +119,6 @@ def dashboard(request):
             "cvs": cvs,
             "selected_cv": selected_cv,
             "total_cvs": total_cvs,
-            "ai_improvements_used": total_cvs,
-            "cover_letters_generated": cover_letters.count(),
             "cover_letters": cover_letters,
             "selected_letter": selected_letter,
             "latest_cv_letter": latest_cv_letter,

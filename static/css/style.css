@@ -115,12 +115,6 @@ h5 {
     background: rgba(255, 255, 255, 0.12);
 }
 
-.logout-form {
-    display: inline;
-    margin: 0;
-    padding: 0;
-}
-
 /* ======================================================
    MAIN PAGE WRAPPER
 ====================================================== */
@@ -187,12 +181,6 @@ h5 {
     background: linear-gradient(135deg, var(--success), #34d399);
     border-color: transparent;
     color: white;
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    border-color: transparent;
-    color: #111827;
 }
 
 .btn-outline-primary {
@@ -402,31 +390,6 @@ body:has(.dashboard-page) .page-shell {
     font-size: 15px;
 }
 
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.mini-stat {
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 10px 14px;
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
-}
-
-.mini-stat h2 {
-    font-size: 22px;
-    margin: 0;
-}
-
-.mini-stat p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-}
-
 .dashboard-preview-card {
     flex: 1;
     background: #ffffff;
@@ -525,120 +488,6 @@ body:has(.dashboard-page) .page-shell {
 
 .dashboard-toolbar .btn i {
     margin-right: 6px;
-}
-
-/* Older dashboard class names kept for compatibility */
-.app-dashboard {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    height: calc(100vh - 90px);
-    overflow: hidden;
-}
-
-.app-sidebar {
-    background: white;
-    padding: 22px 20px;
-    overflow-y: auto;
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    height: calc(100vh - 76px);
-}
-
-.app-main {
-    padding: 20px 28px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    height: calc(100vh - 76px);
-}
-
-.compact-top {
-    margin-bottom: 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 18px;
-    padding: 24px 28px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-    border-radius: 24px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-    border: 1px solid rgba(37, 99, 235, 0.08);
-}
-
-.compact-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 18px;
-}
-
-.stat-card {
-    padding: 18px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-    border: 1px solid rgba(229, 231, 235, 0.8);
-}
-
-.compact-document {
-    display: flex;
-    flex-direction: column;
-    padding: 28px;
-    height: 100%;
-    overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-    border-radius: 24px;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(229, 231, 235, 0.9);
-    max-height: calc(100vh - 260px);
-}
-
-.cv-stage {
-    flex: 1;
-    overflow: hidden;
-}
-
-.cv-content-grid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
-    overflow: hidden;
-    margin-top: 6px;
-    min-height: 0;
-}
-
-.cv-content-grid > div {
-    overflow-y: auto;
-    padding-right: 10px;
-    max-height: 100%;
-}
-
-.cv-side-panel {
-    padding: 20px;
-    background: linear-gradient(180deg, #f8fafc 0%, #f3f8ff 100%);
-    border-radius: 18px;
-    border: 1px solid #e2e8f0;
-}
-
-.compact-toolbar {
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.compact-toolbar .btn {
-    padding: 12px;
-    font-size: 15px;
-    justify-content: center;
-    box-shadow: none;
-}
-
-.compact-toolbar .btn:hover {
-    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
 }
 
 /* ======================================================
@@ -952,7 +801,6 @@ body:has(.template-page) .page-shell {
     align-items: flex-start;
 }
 
-
 .template-page {
     width: 80%;
     max-width: 1400px;
@@ -975,11 +823,6 @@ body:has(.template-page) .page-shell {
     max-height: 420px;
     display: flex;
     flex-direction: column;
-}
-
-.template-page .card-img-top {
-    height: 120px;
-    object-fit: cover;
 }
 
 .template-page .card-body {
@@ -1278,16 +1121,8 @@ footer {
         grid-template-columns: 220px 220px minmax(0, 1fr);
     }
 
-    .app-dashboard {
-        grid-template-columns: 260px 1fr;
-    }
-
     .cv-form-grid {
         grid-template-columns: 1fr;
-    }
-
-    .compact-toolbar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .dashboard-toolbar {
@@ -1302,7 +1137,6 @@ footer {
 
 @media (max-width: 992px) {
     body:has(.dashboard-page),
-    body:has(.app-dashboard),
     body:has(.pricing-page),
     body:has(.template-page),
     body:has(.auth-page) {
@@ -1337,61 +1171,45 @@ footer {
     .ai-header,
     .pricing-header,
     .template-header,
-    .compact-top,
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
 
-    .dashboard-page,
-    .app-dashboard {
+    .dashboard-page {
         grid-template-columns: 1fr;
         width: 96vw;
         height: auto;
         overflow: visible;
     }
 
-    .dashboard-sidebar,
-    .app-sidebar {
+    .dashboard-sidebar {
         max-height: 280px;
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--border);
     }
 
-    .dashboard-main,
-    .app-main {
+    .dashboard-main {
         overflow: visible;
         height: auto;
     }
 
-    .dashboard-preview-card,
-    .compact-document {
+    .dashboard-preview-card {
         min-height: auto;
         max-height: none;
     }
 
-    .preview-content,
-    .cv-content-grid {
+    .preview-content {
         grid-template-columns: 1fr;
         overflow: visible;
     }
 
     .preview-left,
-    .preview-right,
-    .cv-content-grid > div {
+    .preview-right {
         overflow: visible;
         max-height: none;
-    }
-
-    .dashboard-stats,
-    .compact-stats {
-        grid-template-columns: 1fr;
-    }
-
-    .compact-toolbar {
-        grid-template-columns: 1fr;
     }
 
     .cover-page {
@@ -1464,8 +1282,7 @@ footer {
     }
 
     .card-body,
-    .form-section .card-body,
-    .compact-document {
+    .form-section .card-body {
         padding: 20px;
     }
 
@@ -1536,7 +1353,6 @@ footer {
     }
 }
 
-
 .tailored-badge {
     display: inline-flex;
     align-items: center;
@@ -1561,7 +1377,6 @@ footer {
     margin-top: 4px;
 }
 
-
 .free-document { position: relative; isolation: isolate; }
 .free-document::after {
     content: "AI CV Builder - Free Version";
@@ -1571,7 +1386,6 @@ footer {
     color: rgba(60, 75, 100, 0.25);
     transform: rotate(-25deg); pointer-events: none; z-index: 2;
 }
-
 
 .pricing-plans .pricing-card { width: 100%; }
 .pricing-plans .pricing-card .card-body {

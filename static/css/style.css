@@ -247,12 +247,13 @@ select {
     min-width: 0;
 }
 
-.how-to-steps .card-body {
+#how-to-use .how-to-steps .card-body > p {
     font-size: 1.25rem;
 }
 
-.how-to-steps .badge {
-    font-size: 0.875rem;
+#how-to-use .how-to-steps .card-body > h3 {
+    font-size: min(calc(1.325rem + 0.9vw), 2rem);
+    font-weight: 700;
 }
 
 @media (min-width: 768px) {

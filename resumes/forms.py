@@ -4,9 +4,20 @@
 from django import forms
 
 # The ModelForm below creates or updates this database model.
-from .models import CV, JobAlertPreference
+from .models import CV, CoverLetter, JobAlertPreference
 from .validators import validate_additional_sections
 from .widgets import AdditionalSectionsWidget
+
+
+class CoverLetterForm(forms.ModelForm):
+    content = forms.CharField(
+        label="Cover letter",
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 20}),
+    )
+
+    class Meta:
+        model = CoverLetter
+        fields = ["content"]
 
 
 # ModelForm converts selected CV model fields into HTML form fields.

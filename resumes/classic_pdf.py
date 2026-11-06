@@ -4,7 +4,6 @@ import re
 from xml.sax.saxutils import escape
 
 from django.http import HttpResponse
-from .pdf_helpers import linked_paragraph_text
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -15,6 +14,8 @@ from reportlab.platypus import (
     SimpleDocTemplate,
     Spacer,
 )
+
+from .pdf_helpers import linked_paragraph_text
 
 NAVY = "#193b56"
 
@@ -88,11 +89,15 @@ def render_classic_pdf(cv, watermark=False):
             projects.append(extra)
         else:
             remaining.append(extra)
-    for extra in projects:
-        section(extra["title"], extra["content"], entries=True)
-    if projects and cv.experience and any(str(extra["content"]).strip() for extra in projects):
+    if cv.classic_projects_first:
+        for extra in projects:
+            section(extra["title"], extra["content"], entries=True)
+    if cv.classic_projects_first and projects and cv.experience and any(str(extra["content"]).strip() for extra in projects):
         story.append(PageBreak())
     section("Professional Experience", cv.experience, entries=True)
+    if not cv.classic_projects_first:
+        for extra in projects:
+            section(extra["title"], extra["content"], entries=True)
     section("Education and Certifications", cv.education)
     for extra in remaining:
         section(extra["title"], extra["content"], entries=True)

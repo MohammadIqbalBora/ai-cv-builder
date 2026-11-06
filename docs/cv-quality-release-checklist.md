@@ -1,9 +1,10 @@
 # CV quality release checks
 
-The original Modern, Classic and Executive layouts and preview designs have
-been restored. Tailoring still saves an AI-suggested section order, but the
-restored templates use their original section ordering. The saved ranking is
-not currently applied to PDF exports or previews.
+The original Modern, Classic and Executive designs are retained. A saved AI
+ranking promotes Projects above Experience only when project evidence should
+lead; other additional sections keep their usual placement. Experience-led
+rankings put employment before projects. CVs without a ranking keep their legacy
+template order. See cv-layout-rollback.md to restore the baseline.
 
 Apply the schema change before using this version:
 

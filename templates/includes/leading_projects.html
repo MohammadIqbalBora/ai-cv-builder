@@ -1,0 +1,3 @@
+{% for section in cv.leading_projects %}
+<section class="mt-4"><h4>{{ section.title }}</h4><div>{{ section.content|urlize|linebreaksbr }}</div></section>
+{% endfor %}

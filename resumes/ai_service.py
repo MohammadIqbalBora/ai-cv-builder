@@ -423,7 +423,10 @@ Section order:
 - Do not choose order based only on the target job title or an entry-level label.
 - If relevant development evidence is in personal projects and employment is unrelated IT support,
   put the project section before employment, even if the job title contains no junior/entry-level wording.
-- If relevant professional experience is the strongest evidence, put experience before projects.
+- If the employment section already demonstrates relevant experience for the target job,
+  keep experience before projects. Promote projects only when they provide relevant evidence
+  that employment does not demonstrate. If neither is relevant, keep experience before projects.
+- Missing commercial employment does not erase practical skills demonstrated by personal projects.
 - If qualifications, research, volunteering or another section provide the strongest evidence,
   prioritise those instead. Apply the same reasoning to every profession.
 - Never turn personal projects into paid employment or imply experience that is not in the source.

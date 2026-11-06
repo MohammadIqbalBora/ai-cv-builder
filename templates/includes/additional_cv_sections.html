@@ -1,4 +1,4 @@
-{% for section in cv.additional_sections %}
+{% for section in cv.trailing_sections %}
   <section class="mt-4">
     <h4>{{ section.title }}</h4>
     <div>{{ section.content|urlize|linebreaksbr }}</div>

@@ -59,6 +59,34 @@ class CV(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
+    def projects_first(self):
+        from .cv_layout import PROJECT_TITLES, normalise_section_order
+        order = normalise_section_order(self.section_order, self.additional_sections)
+        if "experience" not in order:
+            return False
+        return any(
+            f"additional:{index}" in order
+            and order.index(f"additional:{index}") < order.index("experience")
+            for index, item in enumerate(self.additional_sections or [])
+            if item["title"].strip().casefold() in PROJECT_TITLES
+        )
+
+    @property
+    def leading_projects(self):
+        from .cv_layout import PROJECT_TITLES
+        return [item for item in self.additional_sections or []
+                if self.projects_first and item["title"].strip().casefold() in PROJECT_TITLES]
+
+    @property
+    def trailing_sections(self):
+        return [item for item in self.additional_sections or [] if item not in self.leading_projects]
+
+    @property
+    def classic_projects_first(self):
+        # Preserve the original Classic ordering for CVs without an AI ranking.
+        return not self.section_order or self.projects_first
+
+    @property
     def modern_sections(self):
         from .cv_layout import modern_sections
         return modern_sections(self)

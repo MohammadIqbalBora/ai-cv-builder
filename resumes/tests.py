@@ -260,6 +260,25 @@ class TailoredCVReviewTests(TestCase):
         self.assertEqual(self.source.skills, "Lesson planning")
         self.assertEqual(tailored.original_content["skills"], "Lesson planning")
 
+    @patch("resumes.views.AIService")
+    def test_tailoring_saves_job_specific_order_without_changing_source(self, ai):
+        self.source.additional_sections = [{"title": "Volunteering", "content": "Tutored pupils"}]
+        self.source.save()
+        ai.return_value.analyse_job_description.return_value = {"match_score": 70}
+        ai.return_value.tailor_cv_to_job.return_value = {
+            "job_title": "Teacher", "section_order": ["professional_summary", "additional:0", "education", "experience", "skills", "invented"]}
+        self.client.post(reverse("job_match", args=[self.source.id]), {"job_description": "Teacher"})
+        self.client.post(reverse("tailor_cv_to_job", args=[self.source.id]), {"job_description": "Teacher"})
+        tailored = CV.objects.exclude(id=self.source.id).get()
+        self.assertEqual(tailored.section_order, ["professional_summary", "additional:0", "education", "experience", "skills"])
+        self.source.refresh_from_db()
+        self.assertEqual(self.source.section_order, [])
+        self.assertEqual(tailored.additional_sections, self.source.additional_sections)
+        response = self.client.get(reverse("review_tailored_cv", args=[tailored.id]))
+        self.assertContains(response, "Suggested section order")
+        ai.return_value.tailor_cv_to_job.assert_called_once()
+        self.assertIn("[additional:0] Volunteering", ai.return_value.tailor_cv_to_job.call_args.args[0])
+
     def test_review_is_private_and_comparison_escapes_html(self):
         self.source.original_content = {"skills": "<script>alert(1)</script>"}
         self.source.skills = "<img src=x onerror=alert(1)>"

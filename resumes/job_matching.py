@@ -17,7 +17,8 @@ def cv_matching_text(cv):
         ("Experience", cv.experience), ("Education", cv.education),
     )
     lines = [f"{title}: {value or ''}" for title, value in fields]
-    lines.extend(f"{section['title']}: {section['content']}" for section in cv.additional_sections)
+    lines.extend(f"[additional:{index}] {section['title']}: {section['content']}"
+                 for index, section in enumerate(cv.additional_sections))
     return "\n".join(lines)
 
 

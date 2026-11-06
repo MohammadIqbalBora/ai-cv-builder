@@ -51,10 +51,17 @@ class CV(models.Model):
         default="modern",
     )
 
+    section_order = models.JSONField(default=list, blank=True)
+
     original_content = models.JSONField(default=dict, blank=True)
 
     # Record the creation time once, when Django first inserts the row.
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def modern_sections(self):
+        from .cv_layout import modern_sections
+        return modern_sections(self)
 
     # Admin pages and debugging display a CV using its candidate name.
     def __str__(self):

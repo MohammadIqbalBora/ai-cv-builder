@@ -31,7 +31,9 @@
 
     </div>
 
-    {% if cv.template == "classic" %}
+    {% if cv.template != "classic" %}
+    {% include "includes/modern_cv.html" %}
+    {% elif cv.template == "classic" %}
     {% include "includes/classic_cv.html" %}
     {% else %}
     <!-- CV CARD -->

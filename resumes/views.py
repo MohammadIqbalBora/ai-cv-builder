@@ -908,6 +908,10 @@ def tailor_cv_to_job(request, id):
         # Never overwrite the source CV: request tailored structured field data.
         tailored_data = ai.tailor_cv_to_job(cv_matching_text(cv), job_description)
 
+        from .cv_layout import normalise_section_order
+
+        section_order = normalise_section_order(tailored_data.get("section_order"), cv.additional_sections)
+
         # Avoid repeatedly appending the suffix when tailoring an existing copy.
         base_name = cv.full_name.split(" - Tailored CV")[0]
 
@@ -926,6 +930,7 @@ def tailor_cv_to_job(request, id):
             experience=tailored_data.get("experience") or cv.experience,
             education=tailored_data.get("education") or cv.education,
             additional_sections=cv.additional_sections,
+            section_order=section_order or cv.section_order,
             template=cv.template,
             original_content={name: getattr(cv, name) or "" for name in TailoredCVReviewForm.Meta.fields},
         )

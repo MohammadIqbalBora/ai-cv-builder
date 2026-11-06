@@ -323,7 +323,7 @@ def edit_cv(request, id):
     if not cv.job_title:
         missing_fields.append("Job Title")
     if not cv.professional_summary:
-        missing_fields.append("Professional Summary")
+        missing_fields.append("Professional Profile")
     if not cv.skills:
         missing_fields.append("Skills")
     if not cv.experience:

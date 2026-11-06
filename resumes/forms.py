@@ -59,6 +59,7 @@ class CVForm(forms.ModelForm):
 
         # Require only the candidate name while allowing partial CV values.
         self.fields["full_name"].required = True
+        self.fields["professional_summary"].label = "Professional Profile"
 
         # Keep the optional field names together so one loop can configure them.
         optional_fields = [
@@ -89,6 +90,7 @@ class TailoredCVReviewForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["professional_summary"].label = "Professional Profile"
         for name in self.fields:
             if name != "job_title":
                 self.fields[name].widget = forms.Textarea(attrs={"class": "form-control", "rows": 8})

@@ -115,11 +115,11 @@
 
       <div class="preview-content">
         <div class="preview-left">
-          <h3>Professional Summary</h3>
+          <h3>Professional Profile</h3>
           {% if selected_cv.professional_summary %}
           <p class="preserve-lines">{{ selected_cv.professional_summary }}</p>
           {% else %}
-          <p>No professional summary added yet.</p>
+          <p>No professional profile added yet.</p>
           {% endif %}
 
           {% include "includes/leading_projects.html" with cv=selected_cv %}

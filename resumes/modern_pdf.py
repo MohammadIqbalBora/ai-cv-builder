@@ -225,7 +225,7 @@ def render_modern_pdf(cv, watermark=False):
 
     y = draw_section(
         pdf,
-        "Professional Summary",
+        "Professional Profile",
         cv.professional_summary,
         main_x,
         y,

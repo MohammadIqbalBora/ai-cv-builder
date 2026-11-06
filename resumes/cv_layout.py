@@ -16,7 +16,7 @@ def modern_sections(cv):
     """Apply the saved relevance ranking without deleting unranked content."""
     extras = cv.additional_sections or []
     sections = [
-        {"id": "professional_summary", "title": "Professional Summary", "content": cv.professional_summary},
+        {"id": "professional_summary", "title": "Professional Profile", "content": cv.professional_summary},
         {"id": "skills", "title": "Skills", "content": cv.skills},
     ]
     projects, other = [], []

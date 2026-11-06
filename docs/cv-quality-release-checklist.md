@@ -1,10 +1,9 @@
 # CV quality release checks
 
-All CV templates use the relevance order saved during tailoring. The AI ranks
-employment, projects, qualifications and other supplied sections against the job
-specification, regardless of profession or title. Invalid or duplicate section
-IDs are ignored; omitted sections are appended so evidence is not lost. Older
-CVs without a saved ranking use a projects-first fallback.
+The original Modern, Classic and Executive layouts and preview designs have
+been restored. Tailoring still saves an AI-suggested section order, but the
+restored templates use their original section ordering. The saved ranking is
+not currently applied to PDF exports or previews.
 
 Apply the schema change before using this version:
 
@@ -20,9 +19,8 @@ Run the suite without connecting to the hosted database:
 .\.venv\Scripts\python.exe manage.py test --settings=config.test_settings --noinput
 ```
 
-The PDF regression tests cover complete skills and contact details, project
-ordering, qualifications, multi-page content, links, long tokens and escaped
-markup. AI calls in the test suite are mocked: passing tests do not establish
+Existing PDF tests cover additional sections, links and watermark behaviour.
+The replacement-layout regression tests were removed with those layouts. AI calls in the test suite are mocked: passing tests do not establish
 that real model output meets the writing requirements.
 
 ## Quality gate before public launch
@@ -36,8 +34,8 @@ that real model output meets the writing requirements.
    tailoring, review, saving and export. Record failures and retest after changes.
 3. Inspect every PDF template visually with short and long inputs. Check all pages,
    readable text, links, page breaks, contact details and preview section order.
-   Modern uses flowing paragraphs; headings stay with subsequent content but long
-   roles can still continue onto another page.
+   The restored Modern sidebar uses its original fixed-length rendering; check
+   long skills and contact details for truncation.
 4. Test the complete user journey in staging: upload, analyse, tailor, compare,
    correct, save and download. Test AI timeouts, invalid responses and retry
    behaviour so failures do not lose source content or create confusing copies.
@@ -56,12 +54,12 @@ that real model output meets the writing requirements.
 
 Prompt changes apply to new imports/tailoring requests. They do not repair saved
 text. Re-import the original document if qualifications were lost during upload,
-then tailor a new copy. Rendering changes apply on the next Modern PDF download.
+then tailor a new copy. The restored layouts apply on the next PDF download.
 
 ## Scope
 
-This change improves Modern exports and the upload/tailoring instructions. It is
+The upload/tailoring instruction improvements remain; PDF layouts are restored. This is
 not a complete security, billing, accessibility or production-readiness audit.
 Classic and Executive rendering remain separate implementations and need their
-own visual review, although they share section ordering. The named-skill preservation and writing rules are model
+own visual review, and use their original section ordering. The named-skill preservation and writing rules are model
 instructions, not deterministic factual validation.

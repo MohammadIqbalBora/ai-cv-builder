@@ -113,9 +113,6 @@
 
       <hr />
 
-      {% if selected_cv.template != "classic" %}
-      {% include "includes/modern_cv.html" with cv=selected_cv %}
-      {% else %}
       <div class="preview-content">
         <div class="preview-left">
           <h3>Professional Summary</h3>
@@ -141,8 +138,6 @@
           <p class="preserve-lines">{{ selected_cv.education|default:"No education added yet." }}</p>
         </div>
       </div>
-
-      {% endif %}
 
       <div class="dashboard-toolbar">
         {% if selected_cv.original_content %}

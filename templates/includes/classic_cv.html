@@ -4,7 +4,30 @@
     <h1>{{ cv.full_name }}</h1>
     <p>{% if cv.address %}{{ cv.address }}{% endif %}{% if cv.phone %}{% if cv.address %} | {% endif %}{{ cv.phone }}{% endif %}{% if cv.email %}{% if cv.address or cv.phone %} | {% endif %}{{ cv.email }}{% endif %}</p>
   </header>
-  {% for section in cv.modern_sections %}
-  <section><h2>{{ section.title }}</h2><div>{{ section.content|urlize|linebreaksbr }}</div></section>
+  {% if cv.professional_summary %}
+  <section><h2>Professional Profile</h2><div>{{ cv.professional_summary|linebreaksbr }}</div></section>
+  {% endif %}
+  {% if cv.skills %}
+  <section><h2>Technical Skills</h2><div>{{ cv.skills|linebreaksbr }}</div></section>
+  {% endif %}
+  {% for section in cv.additional_sections %}
+    {% with title=section.title|lower %}
+      {% if title == "projects" or title == "personal projects" or title == "selected projects" %}
+      <section><h2>{{ section.title }}</h2><div>{{ section.content|linebreaksbr }}</div></section>
+      {% endif %}
+    {% endwith %}
+  {% endfor %}
+  {% if cv.experience %}
+  <section><h2>Professional Experience</h2><div>{{ cv.experience|linebreaksbr }}</div></section>
+  {% endif %}
+  {% if cv.education %}
+  <section><h2>Education and Certifications</h2><div>{{ cv.education|linebreaksbr }}</div></section>
+  {% endif %}
+  {% for section in cv.additional_sections %}
+    {% with title=section.title|lower %}
+      {% if title != "projects" and title != "personal projects" and title != "selected projects" %}
+      <section><h2>{{ section.title }}</h2><div>{{ section.content|linebreaksbr }}</div></section>
+      {% endif %}
+    {% endwith %}
   {% endfor %}
 </article>

@@ -5,7 +5,6 @@
   <h1>Review your tailored CV</h1>
   <p>{{ cv.full_name }}</p>
   <p>Review the suggestions below. Type your own wording in the editable new CV fields, or choose Use original text to reject a section?s changes. Click Save reviewed CV to keep your choices. Your original CV is unchanged.</p>
-  <p><strong>Suggested section order:</strong> {% for item in cv.modern_sections %}{{ item.title }}{% if not forloop.last %} ? {% endif %}{% endfor %}</p>
   <p><mark>Highlighted text</mark> shows wording removed from the original or added to this CV.</p>
   {{ cv.original_content|json_script:"original-cv-content" }}
   <button type="button" class="btn btn-outline-secondary mb-3" id="restore-all">Use original text for all sections</button>

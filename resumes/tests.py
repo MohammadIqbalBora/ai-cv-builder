@@ -290,7 +290,6 @@ class TailoredCVReviewTests(TestCase):
         self.assertEqual(response.context["selected_cv"].pk, tailored.pk)
         self.assertContains(response, reverse("select_pdf_template", args=[tailored.pk]))
         tailored.refresh_from_db()
-        self.assertTrue(tailored.projects_first)
         self.assertEqual(tailored.section_order, ["additional:0", "experience"])
 
     def test_review_is_private_and_comparison_escapes_html(self):

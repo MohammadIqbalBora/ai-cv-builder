@@ -1,14 +1,10 @@
-# Restore the layout behaviour before relevance ordering
+# Current layout baseline
 
-Baseline commit: `3e3d104` (Restore original CV layouts and previews).
+The CV renderers and previews have been restored to commit `3e3d104`, with
+Professional Profile retained as the visible heading. Conditional project
+promotion and the replacement Modern sidebar wrapping have been removed.
+The original template ordering, styles, pagination and sidebar rendering apply.
 
-To discard only this section-ordering change, restore these paths from that commit:
-
-```powershell
-git restore --source=3e3d104 -- resumes/ai_service.py resumes/models.py resumes/modern_pdf.py resumes/classic_pdf.py resumes/executive_pdf.py templates/cv_detail.html templates/cv_preview.html templates/dashboard.html templates/includes/additional_cv_sections.html templates/includes/classic_cv.html
-```
-
-The new `templates/includes/leading_projects.html` and `resumes/test_project_order.py`
-can then be deleted. No database migration is required for this change or rollback.
-Commit and push the restoration if this version has been deployed. This baseline
-preserves the AI writing improvements and Professional Profile form label.
+AI source-preservation safeguards and the explicit tailored-CV selection after
+review remain. The database section_order field remains for compatibility, but
+these original templates do not apply that ranking. No migration is needed.

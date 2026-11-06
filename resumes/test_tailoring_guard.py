@@ -1,10 +1,6 @@
-from io import BytesIO
-
 from django.test import SimpleTestCase
-from pypdf import PdfReader
 
 from .models import CV
-from .modern_pdf import render_modern_pdf
 from .tailoring_guard import protect_source_sections
 
 
@@ -35,14 +31,3 @@ class TailoringGuardTests(SimpleTestCase):
         result, restored = protect_source_sections(cv, proposed)
         self.assertEqual(result, proposed)
         self.assertEqual(restored, [])
-
-    def test_modern_skills_wrap_without_losing_comma_separated_or_overflow_entries(self):
-        skills = ["HTML5", "CSS3", "JavaScript", "Django", "PostgreSQL", "OpenAI API", "Chrome DevTools"]
-        cv = CV(full_name="Applicant", email="long.email.address.with.many.characters@example.com",
-                skills=", ".join(skills) + "\n" + "\n".join(f"Skill number {i}" for i in range(100)))
-        reader = PdfReader(BytesIO(render_modern_pdf(cv).content))
-        text = "\n".join(page.extract_text() for page in reader.pages)
-        for skill in skills:
-            self.assertIn(skill, text)
-        self.assertIn("Skill number 99", text)
-        self.assertIn("CONTINUED", text)

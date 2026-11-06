@@ -1,10 +1,9 @@
 # CV quality release checks
 
-The original Modern, Classic and Executive designs are retained. A saved AI
-ranking promotes Projects above Experience only when project evidence should
-lead; other additional sections keep their usual placement. Experience-led
-rankings put employment before projects. CVs without a ranking keep their legacy
-template order. See cv-layout-rollback.md to restore the baseline.
+The original layouts and section ordering from commit `3e3d104` have been
+restored, keeping Professional Profile as the visible heading. Saved AI rankings
+are not applied to the restored templates. Modern uses its original fixed-length
+sidebar rendering, so long skills and contact details may be truncated.
 
 Apply the schema change before using this version:
 

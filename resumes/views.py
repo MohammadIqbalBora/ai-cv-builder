@@ -951,7 +951,7 @@ def review_tailored_cv(request, id):
     form = TailoredCVReviewForm(request.POST or None, instance=cv)
     if request.method == "POST" and form.is_valid():
         form.save()
-        return redirect("dashboard")
+        return redirect(f"{reverse('dashboard')}?cv={cv.pk}#dashboard-preview")
 
     sections = []
     for field in form:

@@ -253,7 +253,7 @@ class TailoredCVReviewTests(TestCase):
         self.assertContains(response, "<mark>and assessment</mark>", html=True)
         self.assertContains(response, "Unchanged")
         response = self.client.post(reverse("review_tailored_cv", args=[tailored.id]), {"job_title": "English Teacher", "skills": "My corrected skills", "experience": "Taught English"})
-        self.assertRedirects(response, reverse("dashboard"))
+        self.assertRedirects(response, reverse("dashboard") + f"?cv={tailored.pk}#dashboard-preview")
         tailored.refresh_from_db()
         self.source.refresh_from_db()
         self.assertEqual(tailored.skills, "My corrected skills")
@@ -278,6 +278,20 @@ class TailoredCVReviewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         ai.return_value.tailor_cv_to_job.assert_called_once()
         self.assertIn("[additional:0] Volunteering", ai.return_value.tailor_cv_to_job.call_args.args[0])
+
+    def test_review_save_keeps_exact_cv_selected_even_when_another_cv_is_newer(self):
+        tailored = CV.objects.create(
+            user=self.user, full_name="Alex - Tailored CV", original_content={"skills": "Original"},
+            additional_sections=[{"title": "Projects", "content": "Relevant project"}],
+            section_order=["additional:0", "experience"])
+        CV.objects.create(user=self.user, full_name="Newer original")
+        response = self.client.post(reverse("review_tailored_cv", args=[tailored.pk]),
+                                    {"skills": "Python", "experience": "IT support"}, follow=True)
+        self.assertEqual(response.context["selected_cv"].pk, tailored.pk)
+        self.assertContains(response, reverse("select_pdf_template", args=[tailored.pk]))
+        tailored.refresh_from_db()
+        self.assertTrue(tailored.projects_first)
+        self.assertEqual(tailored.section_order, ["additional:0", "experience"])
 
     def test_review_is_private_and_comparison_escapes_html(self):
         self.source.original_content = {"skills": "<script>alert(1)</script>"}

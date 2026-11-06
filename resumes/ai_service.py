@@ -404,7 +404,10 @@ Rules:
 - Distinguish alternative requirements (for example HTML/CSS/JavaScript OR PHP/MySQL) from mandatory combined requirements.
 - Use relevant project evidence in the summary; do not omit it simply because it appears outside employment.
 - Do not invent availability, portfolio URLs, code line counts or application answers. These require candidate confirmation.
-- Experience must keep the original companies, job titles and dates.
+- Experience must keep EVERY original company, job title, date and employment entry, including less relevant roles.
+- NEVER replace employment with personal projects. Projects remain only in their supplied additional section.
+- Do not duplicate projects in experience, even if projects are the best match. Use section_order to promote them.
+- Do not claim recognition, awards, innovation or accessibility expertise without explicit source evidence.
 - Rewrite bullet points so they show transferable value for this job.
 - Order skills and education by relevance to the target profession, using only supplied evidence.
 - Keep the CV truthful and suitable for a UK job application.

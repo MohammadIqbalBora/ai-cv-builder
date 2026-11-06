@@ -25,45 +25,55 @@ def draw_sidebar(pdf, cv, width, height, sidebar_width):
     y -= 26
     pdf.setFont("Helvetica", 8.5)
 
+    overflow = []
+
+    def sidebar_text(text, font="Helvetica", size=8.2):
+        nonlocal y
+        pdf.setFont(font, size)
+        # Measure characters as well as words so long emails/URLs cannot overflow.
+        line = ""
+        for char in str(text):
+            if pdf.stringWidth(line + char, font, size) > sidebar_width - 40:
+                if y >= 45:
+                    pdf.drawString(x, y, line)
+                    y -= 12
+                else:
+                    overflow.append(line)
+                line = ""
+            line += char
+        if line:
+            if y >= 45:
+                pdf.drawString(x, y, line)
+                y -= 12
+            else:
+                overflow.append(line)
+
     for item in [cv.email, cv.phone, cv.address]:
         if item:
-            for line in str(item).split("\n"):
-                pdf.drawString(x, y, line[:31])
-                y -= 13
+            for line in str(item).splitlines():
+                sidebar_text(line, size=8.5)
             y -= 4
-
     y -= 18
-    pdf.setFont("Helvetica-Bold", 14)
-    pdf.drawString(x, y, "SKILLS")
-
-    y -= 24
-
+    if y >= 65:
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(x, y, "SKILLS")
+        y -= 24
     if not cv.skills:
-        pdf.setFont("Helvetica", 8.5)
-        pdf.drawString(x, y, "N/A")
-        return
-
-    for line in str(cv.skills).split("\n"):
-        line = line.strip()
-
-        if not line:
-            y -= 8
-            continue
-
-        clean_line = line.replace("•", "", 1).strip()
-
-        if clean_line.endswith(":"):
-            y -= 6
-            pdf.setFont("Helvetica-Bold", 8.7)
-            pdf.drawString(x, y, clean_line.replace(":", "").upper()[:28])
-            y -= 15
-        else:
-            pdf.setFont("Helvetica", 8.2)
-            pdf.drawString(x, y, "•  " + clean_line[:27])
-            y -= 12
-
-        if y < 45:
-            break
+        sidebar_text("N/A")
+    else:
+        for line in str(cv.skills).splitlines():
+            clean = line.strip().lstrip("\u2022- ")
+            if not clean:
+                y -= 6
+                continue
+            if clean.endswith(":"):
+                sidebar_text(clean, "Helvetica-Bold", 8.7)
+            else:
+                # Comma-separated AI lists become readable individual skill entries.
+                for skill in clean.split(","):
+                    if skill.strip():
+                        sidebar_text("- " + skill.strip())
+    return "\n".join(overflow)
 
 
 def draw_modern_experience(pdf, text, x, y, max_width, width, height):
@@ -196,7 +206,7 @@ def render_modern_pdf(cv, watermark=False):
     sidebar_width = 175
     margin = 34
 
-    draw_sidebar(pdf, cv, width, height, sidebar_width)
+    sidebar_overflow = draw_sidebar(pdf, cv, width, height, sidebar_width)
 
     main_x = sidebar_width + margin
     main_width = width - main_x - margin
@@ -232,6 +242,10 @@ def render_modern_pdf(cv, watermark=False):
         main_width,
         title_color="#2563eb",
     )
+
+    if sidebar_overflow:
+        y = draw_section(pdf, "Contact / Skills (continued)", sidebar_overflow,
+                         main_x, y, main_width, title_color="#2563eb")
 
     for item in cv.leading_projects:
         y = draw_section(pdf, item["title"], item["content"], main_x, y, main_width, title_color="#2563eb")

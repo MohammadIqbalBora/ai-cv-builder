@@ -15,6 +15,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 
 # Redirect anonymous visitors to login before protected views run.
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 # Build raw responses, including PDFs and webhook status codes.
@@ -907,6 +908,13 @@ def tailor_cv_to_job(request, id):
         ai = AIService()
         # Never overwrite the source CV: request tailored structured field data.
         tailored_data = ai.tailor_cv_to_job(cv_matching_text(cv), job_description)
+        from .tailoring_guard import protect_source_sections
+
+        tailored_data, restored = protect_source_sections(cv, tailored_data)
+        if restored:
+            messages.warning(request, "Some AI suggestions omitted source details or changed section boundaries. "
+                             "The affected sections were kept from your original CV. Please review the result.")
+
 
         from .cv_layout import normalise_section_order
 
